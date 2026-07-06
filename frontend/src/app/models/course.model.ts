@@ -103,7 +103,7 @@ export interface ClassEnrollment {
   studentEmail?: string;
 
   /* Estado de la inscripción */
-  status: 'active' | 'inactive' | 'pending';
+  status: 'active' | 'completed' | 'cancelled';
 
   /* Fecha */
   enrollmentDate: Date;

@@ -274,7 +274,7 @@ async deleteClassEnrollment(enrollmentId: string): Promise<void> {
 
 async updateClassEnrollmentStatus(
   enrollmentId: string,
-  status: 'active' | 'inactive' | 'pending'
+  status: 'active' | 'completed' | 'cancelled'
 ): Promise<void> {
   const { error } = await this.supabase
     .from('class_enrollments')

@@ -482,7 +482,7 @@ async removeEnrollment(enrollment: ClassEnrollment): Promise<void> {
 }
 
 async toggleEnrollmentStatus(enrollment: ClassEnrollment): Promise<void> {
-  const nextStatus = enrollment.status === 'active' ? 'inactive' : 'active';
+  const nextStatus = enrollment.status === 'active' ? 'cancelled' : 'active';
 
   try {
     this.isLoading = true;

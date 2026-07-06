@@ -19,6 +19,7 @@ import {
 
 // Importa el servicio de Supabase para conectar con la base de datos
 import { SupabaseService } from './supabase.service';
+import { environment } from '../../environments/environment';
 
 // ============================================================
 // Tipo que representa una fila de la tabla app_users en Supabase
@@ -221,15 +222,21 @@ export class UserService {
       password?: string;
     }
   ): Promise<T> {
+    // Obtiene el token del usuario autenticado (requerido por Supabase Edge Functions)
+    const { data: { session } } = await this.supabaseService.getClient().auth.getSession();
+    const accessToken = session?.access_token ?? environment.supabaseKey;
+
     // Realiza una petición HTTP POST a la función serverless
     const response = await fetch(this.getFunctionEndpoint('admin-users'), {
-      method: 'POST',                            // Método POST para enviar datos
+      method: 'POST',
       headers: {
-        'Content-Type': 'application/json'       // Indica que enviamos JSON
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'apikey': environment.supabaseKey
       },
       body: JSON.stringify({
-        action,                                  // La acción a ejecutar
-        ...payload                               // Los datos del usuario
+        action,
+        ...payload
       })
     });
 
