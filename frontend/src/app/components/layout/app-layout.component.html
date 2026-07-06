@@ -1,0 +1,60 @@
+<div class="layout-shell">
+  <!-- Sidebar lateral -->
+  <aside class="sidebar">
+    <!-- Cabecera del sidebar -->
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <i class="fas fa-graduation-cap"></i>
+      </div>
+
+      <div class="brand-text">
+        <h2>EscuelaMak</h2>
+        <p>Panel principal</p>
+      </div>
+    </div>
+
+    <!-- Información del usuario -->
+    <div class="user-box" *ngIf="currentUser">
+      <i class="fas fa-user-circle user-avatar"></i>
+
+      <div class="user-info">
+        <strong>{{ currentUser.name }}</strong>
+        <span>{{ roleLabel }}</span>
+      </div>
+    </div>
+
+    <!-- Menú de navegación -->
+    <nav class="sidebar-nav">
+      <!-- Mensajes (campana) — siempre visible, primer ítem -->
+      <div class="notif-bell nav-link" [class.has-notif]="unreadCount > 0" (click)="goToMessages()" title="Mensajes sin leer">
+        <i class="fas fa-bell"></i>
+        <span class="notif-badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+        <span class="notif-label">Mensajes</span>
+      </div>
+
+      <a
+        *ngFor="let item of visibleNavItems"
+        [routerLink]="item.route"
+        routerLinkActive="active-link"
+        class="nav-link"
+      >
+        <i [class]="item.icon"></i>
+        <span>{{ item.label }}</span>
+      </a>
+    </nav>
+
+    <!-- Footer del sidebar -->
+    <div class="sidebar-footer">
+      <button class="logout-btn" (click)="logout()">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Salir</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Área principal -->
+  <main class="layout-content">
+    <!-- Aquí se cargará cada página -->
+    <router-outlet></router-outlet>
+  </main>
+</div>

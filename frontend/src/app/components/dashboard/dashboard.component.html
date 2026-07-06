@@ -1,0 +1,111 @@
+<div class="dashboard-page">
+
+  <!-- ═══════════════════════════════════
+       TARJETA DE BIENVENIDA
+  ════════════════════════════════════ -->
+  <section class="welcome-card" [ngClass]="roleClass">
+    <div class="welcome-content">
+      <div class="welcome-left">
+
+        <!-- Badge con rol del usuario -->
+        <div class="role-badge">
+          <i class="fas" [ngClass]="roleIcon"></i>
+          {{ roleLabel }}
+        </div>
+
+        <!-- Nombre y correo -->
+        <h1 class="welcome-name">
+          Hola, {{ currentUser?.name || 'Usuario' }} 👋
+        </h1>
+        <p class="welcome-email">{{ currentUser?.email }}</p>
+        <p class="welcome-desc">{{ roleDescription }}</p>
+
+      </div>
+      <!-- Avatar decorativo -->
+      <div class="welcome-avatar">
+        <i class="fas fa-user-circle"></i>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       TÍTULO DE SECCIÓN
+  ════════════════════════════════════ -->
+  <h2 class="section-title">{{ dashboardTitle }}</h2>
+
+  <!-- ═══════════════════════════════════
+       GRID DE TARJETAS DE ACCESO
+       Cada tarjeta solo aparece si el
+       usuario tiene permiso para verla
+  ════════════════════════════════════ -->
+  <div class="card-grid">
+
+    <!-- Gestión de Usuarios: solo ADMIN -->
+    <a routerLink="/user-management" class="accion-card card-usuarios"
+       *ngIf="canManageUsers()">
+      <div class="card-icono">👥</div>
+      <div class="card-info">
+        <h3>Gestión de Usuarios</h3>
+        <p>Administra los usuarios del sistema</p>
+      </div>
+      <div class="card-flecha">→</div>
+    </a>
+
+    <!-- Ejercicios y Revisión -->
+    <a routerLink="/review" class="accion-card card-ejercicios"
+       *ngIf="canReviewExercises()">
+      <div class="card-icono">⭐</div>
+      <div class="card-info">
+        <h3>Ejercicios</h3>
+        <p>Practica y revisa cuestionarios</p>
+      </div>
+      <div class="card-flecha">→</div>
+    </a>
+
+    <!-- Mis Cursos -->
+    <a routerLink="/courses" class="accion-card card-cursos"
+       *ngIf="canViewCourses()">
+      <div class="card-icono">📚</div>
+      <div class="card-info">
+        <h3>Mis Cursos</h3>
+        <p>Explora el mundo de las matemáticas</p>
+      </div>
+      <div class="card-flecha">→</div>
+    </a>
+
+    <!-- Gestión de Quizzes -->
+    <a routerLink="/quiz-management" class="accion-card card-quizzes"
+       *ngIf="canManageQuizzes()">
+      <div class="card-icono">❓</div>
+      <div class="card-info">
+        <h3>Gestión de Quizzes</h3>
+        <p>Crea y administra cuestionarios</p>
+      </div>
+      <div class="card-flecha">→</div>
+    </a>
+
+    <!-- Gestión de Cursos -->
+    <a routerLink="/course-management" class="accion-card card-gestion"
+       *ngIf="canManageCourses()">
+      <div class="card-icono">🎓</div>
+      <div class="card-info">
+        <h3>Gestión de Cursos</h3>
+        <p>Administra los cursos de la plataforma</p>
+      </div>
+      <div class="card-flecha">→</div>
+    </a>
+
+    <!-- Parámetros: solo ADMIN -->
+    <a routerLink="/parameters" class="accion-card card-params"
+       *ngIf="canManageParameters()">
+      <div class="card-icono">⚙️</div>
+      <div class="card-info">
+        <h3>Parámetros</h3>
+        <p>Usuarios, clases, temas y permisos</p>
+      </div>
+      <div class="card-flecha">→</div>
+    </a>
+
+  </div>
+
+</div>

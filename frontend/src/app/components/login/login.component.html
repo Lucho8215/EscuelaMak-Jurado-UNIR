@@ -1,0 +1,120 @@
+<div class="module-container">
+  <div class="kid-card login-card">
+    <div class="kid-card-content">
+      <h1>
+        <i class="fas fa-door-open text-yellow"></i>
+        ¡Bienvenido!
+        <i class="fas fa-door-open text-yellow"></i>
+      </h1>
+
+      <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+
+        <div class="form-group">
+          <label for="email">Tu Correo Mágico</label>
+
+          <div class="input-container">
+            <i class="fas fa-envelope input-icon"></i>
+
+            <input
+              type="email"
+              id="email"
+              name="email"
+              [(ngModel)]="email"
+              required
+              email
+              class="form-control kid-input"
+              placeholder="ejemplo@correo.com"
+              [disabled]="isLoading"
+              #emailInput="ngModel"
+            >
+          </div>
+
+          <div
+            *ngIf="emailInput.invalid && (emailInput.dirty || emailInput.touched)"
+            class="validation-error"
+          >
+            Por favor, ingresa un correo válido
+          </div>
+        </div>
+
+
+        <div class="form-group">
+          <label for="password">Tu Palabra Secreta</label>
+
+          <div class="input-container">
+            <i class="fas fa-lock input-icon"></i>
+
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="password"
+              name="password"
+              [(ngModel)]="password"
+              required
+              class="form-control kid-input"
+              placeholder="••••••••"
+              [disabled]="isLoading"
+              #passwordInput="ngModel"
+            >
+
+            <button
+              type="button"
+              class="password-toggle"
+              (click)="togglePasswordVisibility()"
+              [disabled]="isLoading"
+            >
+              <i
+                class="fas"
+                [class.fa-eye]="!showPassword"
+                [class.fa-eye-slash]="showPassword"
+              ></i>
+            </button>
+
+          </div>
+
+          <div
+            *ngIf="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)"
+            class="validation-error"
+          >
+            Por favor, ingresa tu contraseña
+          </div>
+        </div>
+
+
+        <button
+          type="submit"
+          class="btn btn-kid"
+          [disabled]="isLoading || !loginForm.form.valid"
+        >
+          <i class="fas fa-magic"></i>
+          {{ isLoading ? 'Iniciando...' : '¡Comenzar Aventura!' }}
+        </button>
+
+
+        <div class="login-actions">
+          <button
+            type="button"
+            class="btn btn-link"
+            (click)="recoverPassword()"
+            [disabled]="isLoading"
+          >
+            <i class="fas fa-key"></i>
+            ¿Olvidaste tu contraseña?
+          </button>
+        </div>
+
+
+        <div *ngIf="successMessage" class="success-message">
+          <i class="fas fa-check-circle"></i>
+          {{ successMessage }}
+        </div>
+
+
+        <div *ngIf="errorMessage" class="error-message">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ errorMessage }}
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>

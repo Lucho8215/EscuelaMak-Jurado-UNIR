@@ -1,0 +1,481 @@
+<div class="page-shell">
+
+  <!-- ═══════════════════════════════════
+       ENCABEZADO
+  ════════════════════════════════════ -->
+  <section class="page-header">
+    <div>
+      <h1 class="page-title">
+        🎓 Gestión de Cursos
+      </h1>
+      <p class="page-subtitle">
+        Crea, edita y administra cursos. Gestiona las lecciones asociadas a cada uno.
+      </p>
+    </div>
+  </section>
+
+  <!-- Alerta de error -->
+  <div *ngIf="errorMessage" class="alert-error">
+    ⚠️ {{ errorMessage }}
+  </div>
+
+  <!-- Cargando -->
+  <div *ngIf="isLoading" class="loading-bar">
+    <div class="loading-fill"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       LAYOUT PRINCIPAL: Formulario + Cursos
+  ════════════════════════════════════ -->
+  <div class="main-layout">
+
+    <!-- ─────────────────────────────────
+         PANEL IZQUIERDO: FORMULARIO
+    ────────────────────────────────── -->
+    <aside class="form-panel" [class.modo-editar]="editingCourse" [class.modo-crear]="!editingCourse">
+
+      <!-- Indicador de modo -->
+      <div class="form-modo-badge">
+        <span *ngIf="!editingCourse" class="badge-crear">✨ Crear Nuevo Curso</span>
+        <span *ngIf="editingCourse"  class="badge-editar">✏️ Editando: {{ selectedCourse?.title }}</span>
+      </div>
+
+      <form (ngSubmit)="saveCourse()" #courseForm="ngForm" class="course-form">
+
+        <!-- Título -->
+        <div class="form-group">
+          <label>📚 Título del Curso</label>
+          <input type="text" name="title" [(ngModel)]="newCourse.title"
+                 required class="form-input"
+                 placeholder="Ej: Matemáticas Básicas">
+        </div>
+
+        <!-- Categoría -->
+        <div class="form-group">
+          <label>🏷️ Categoría</label>
+          <select name="category" [(ngModel)]="newCourse.category"
+                  required class="form-input">
+            <option value="education">Educación</option>
+            <option value="mathematics">Matemáticas</option>
+          </select>
+        </div>
+
+        <!-- Descripción -->
+        <div class="form-group">
+          <label>📝 Descripción</label>
+          <textarea name="description" [(ngModel)]="newCourse.description"
+                    required class="form-input" rows="3"
+                    placeholder="Describe el objetivo del curso..."></textarea>
+        </div>
+
+        <!-- Video e imagen -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>🎬 URL del Video</label>
+            <input type="url" name="videoUrl" [(ngModel)]="newCourse.videoUrl"
+                   class="form-input" placeholder="https://youtube.com/...">
+          </div>
+          <div class="form-group">
+            <label>🖼️ Imagen del Curso</label>
+            <input type="file" name="courseImage" class="form-input"
+                   accept="image/*" (change)="onCourseImageSelected($event)">
+          </div>
+        </div>
+
+        <!-- Precio y duración -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>💰 Precio</label>
+            <input type="number" name="price" [(ngModel)]="newCourse.price"
+                   required class="form-input" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>📅 Duración (meses)</label>
+            <input type="number" name="durationMonths"
+                   [(ngModel)]="newCourse.durationMonths"
+                   required class="form-input" min="1">
+          </div>
+        </div>
+
+        <!-- Checkboxes -->
+        <div class="form-checks">
+          <label class="check-label">
+            <input type="checkbox" name="hidePrice" [(ngModel)]="newCourse.hidePrice">
+            Ocultar precio
+          </label>
+          <label class="check-label">
+            <input type="checkbox" name="isVisible" [(ngModel)]="newCourse.isVisible">
+            Visible en catálogo
+          </label>
+        </div>
+
+        <!-- Botones -->
+        <div class="form-btns">
+          <button type="submit" class="btn-guardar"
+                  [disabled]="!courseForm.form.valid || isLoading">
+            {{ editingCourse ? '💾 Guardar Cambios' : '+ Crear Curso' }}
+          </button>
+          <button type="button" class="btn-cancelar" (click)="resetCourseForm()">
+            ✕ Cancelar
+          </button>
+        </div>
+
+      </form>
+    </aside>
+
+    <!-- ─────────────────────────────────
+         PANEL DERECHO: LISTA DE CURSOS
+    ────────────────────────────────── -->
+    <div class="cursos-panel">
+
+      <div class="cursos-header">
+        <h2>📋 Cursos Registrados
+          <span class="cursos-count">{{ courses.length }}</span>
+        </h2>
+      </div>
+
+      <!-- Sin cursos -->
+      <div *ngIf="courses.length === 0 && !isLoading" class="empty-cursos">
+        <div class="empty-icon">📭</div>
+        <p>No hay cursos registrados todavía.</p>
+        <p class="empty-sub">Crea el primer curso usando el formulario de la izquierda.</p>
+      </div>
+
+      <!-- Grid de tarjetas -->
+      <div class="courses-grid" *ngIf="courses.length > 0">
+        <article class="course-card"
+                 *ngFor="let course of courses"
+                 [class.card-seleccionada]="selectedCourse?.id === course.id && editingCourse">
+
+          <!-- Header: categoría y visibilidad -->
+          <div class="card-top">
+            <span class="cat-badge">
+              {{ course.category === 'education' ? '📖 Educación' : '🔢 Matemáticas' }}
+            </span>
+            <span class="vis-badge" [class.vis-on]="course.isVisible">
+              {{ course.isVisible ? '🟢 Visible' : '🔴 Oculto' }}
+            </span>
+          </div>
+
+          <!-- Imagen si existe -->
+          <div class="card-img-wrap" *ngIf="course.imageUrl">
+            <img [src]="course.imageUrl" [alt]="course.title">
+          </div>
+
+          <!-- Título -->
+          <h3 class="card-titulo">{{ course.title }}</h3>
+
+          <!-- Descripción con Ver más -->
+          <div class="card-desc-wrap">
+            <p class="card-desc" [class.desc-expandida]="course.expandida">
+              {{ course.description }}
+            </p>
+            <button *ngIf="(course.description || '').length > 120"
+                    class="btn-ver-mas"
+                    (click)="$event.stopPropagation(); course.expandida = !course.expandida">
+              {{ course.expandida ? '▲ Ver menos' : '▼ Ver más' }}
+            </button>
+          </div>
+
+          <!-- Meta -->
+          <div class="card-meta">
+            <span *ngIf="!course.hidePrice">💰 ${{ course.price }}</span>
+            <span>📅 {{ course.durationMonths || 1 }} mes(es)</span>
+          </div>
+
+          <!-- Acciones -->
+          <div class="card-acciones">
+            <button class="btn-editar" (click)="editCourse(course)">
+              ✏️ Editar
+            </button>
+            <button class="btn-eliminar" (click)="deleteCourse(course.id)">
+              🗑️ Eliminar
+            </button>
+            <button class="btn-lecciones" (click)="manageClasses(course)">
+              📖 Lecciones
+            </button>
+          </div>
+
+        </article>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     MODAL: GESTIÓN DE LECCIONES
+════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showClassModal" (click)="closeClassModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title">📖 Gestión de Lecciones</h2>
+        <p class="modal-subtitle">Curso: <strong>{{ selectedCourse?.title }}</strong></p>
+      </div>
+      <button class="modal-close" (click)="closeClassModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Formulario de lección -->
+      <section class="inner-panel"
+               [class.inner-creando]="!editingClass"
+               [class.inner-editando]="editingClass">
+
+        <div class="inner-modo-badge">
+          <span *ngIf="!editingClass" class="badge-crear">✨ Nueva Lección</span>
+          <span *ngIf="editingClass"  class="badge-editar">✏️ Editando Lección</span>
+        </div>
+
+        <form (ngSubmit)="saveClass()" #classForm="ngForm" class="class-form">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>📌 Nombre de la Lección</label>
+              <input type="text" name="className" [(ngModel)]="newClass.name"
+                     required class="form-input" placeholder="Ej: Grupo A - Nivel 1">
+            </div>
+            <div class="form-group">
+              <label>👩‍🏫 Profesor</label>
+              <select name="teacher" [(ngModel)]="newClass.teacherId"
+                      required class="form-input">
+                <option value="">Selecciona un profesor</option>
+                <option *ngFor="let teacher of teachers" [value]="teacher.id">
+                  {{ teacher.name }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>🔢 Número de Lección</label>
+              <input type="number" name="classNumber"
+                     [(ngModel)]="newClass.classNumber"
+                     required class="form-input" min="1">
+            </div>
+            <div class="form-group">
+              <label>👥 Máx. Estudiantes</label>
+              <input type="number" name="maxStudents"
+                     [(ngModel)]="newClass.maxStudents"
+                     required class="form-input" min="1">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>🗓️ Fecha de Inicio</label>
+              <input type="datetime-local" name="startDate"
+                     [(ngModel)]="newClass.startDate"
+                     required class="form-input">
+            </div>
+            <div class="form-group">
+              <label>🏁 Fecha de Fin</label>
+              <input type="datetime-local" name="endDate"
+                     [(ngModel)]="newClass.endDate"
+                     required class="form-input">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>🔗 Link del Recurso</label>
+              <input type="url" name="resourceLink"
+                     [(ngModel)]="newClass.resourceLink"
+                     class="form-input"
+                     placeholder="https://youtube.com/...">
+            </div>
+            <div class="form-group">
+              <label>🖼️ Imagen de la Lección</label>
+              <input type="file" name="classImage" class="form-input"
+                     accept="image/*" (change)="onClassImageSelected($event)">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>📄 Archivo PDF</label>
+            <input type="file" name="classFile" class="form-input"
+                   accept=".pdf" (change)="onClassFileSelected($event)">
+          </div>
+
+          <div class="form-group">
+            <label>💬 Observación</label>
+            <textarea name="observation" [(ngModel)]="newClass.observation"
+                      class="form-input" rows="2"
+                      placeholder="Observaciones del docente..."></textarea>
+          </div>
+
+          <div class="form-btns">
+            <button type="submit" class="btn-guardar"
+                    [disabled]="!classForm.form.valid || isLoading">
+              {{ editingClass ? '💾 Guardar Cambios' : '+ Crear Lección' }}
+            </button>
+            <button type="button" class="btn-cancelar" (click)="resetClassForm()">
+              ✕ Cancelar
+            </button>
+          </div>
+
+        </form>
+      </section>
+
+      <!-- Lista de lecciones -->
+      <section class="inner-panel inner-lista">
+
+        <h3 class="inner-title">
+          📋 Lecciones del Curso
+          <span class="count-badge">{{ classes.length }}</span>
+        </h3>
+
+        <div *ngIf="classes.length === 0" class="empty-inner">
+          <p>📭 No hay lecciones registradas aún.</p>
+        </div>
+
+        <div class="class-list" *ngIf="classes.length > 0">
+          <article class="class-card"
+                   *ngFor="let clase of classes"
+                   [class.class-editando]="selectedClass?.id === clase.id && editingClass">
+
+            <div class="class-top">
+              <strong>{{ clase.name }}</strong>
+              <span class="class-status-badge"
+                    [class.abierta]="clase.status === 'open'">
+                {{ clase.status === 'open' ? '🟢 Abierta' : '🔴 Cerrada' }}
+              </span>
+            </div>
+
+            <div class="class-info">
+              <span>🔢 #{{ clase.classNumber }}</span>
+              <span>👥 {{ clase.enrollmentCount }}/{{ clase.maxStudents }}</span>
+              <span *ngIf="clase.resourceLink">🔗 Recurso</span>
+              <span *ngIf="clase.resourceFileUrl">📄 PDF</span>
+              <span *ngIf="clase.imageUrl">🖼️ Imagen</span>
+            </div>
+
+            <p *ngIf="clase.observation" class="class-obs">
+              💬 {{ clase.observation }}
+            </p>
+
+            <button *ngIf="ttsSupported && clase.observation"
+                    class="btn-leer"
+                    [class.leyendo]="leyendo && selectedClass?.id === clase.id"
+                    (click)="leerClase(clase)"
+                    title="Escuchar esta observación">
+              {{ (leyendo && selectedClass?.id === clase.id) ? '⏹ Detener' : '🔊 Leer' }}
+            </button>
+
+            <div class="class-acciones">
+              <button class="btn-editar-sm" (click)="editClass(clase)">
+                ✏️ Editar
+              </button>
+              <button class="btn-eliminar-sm" (click)="deleteClass(clase.id)">
+                🗑️ Eliminar
+              </button>
+              <button class="btn-inscribir-sm" (click)="manageEnrollments(clase)">
+                👥 Inscripciones
+              </button>
+            </div>
+
+          </article>
+        </div>
+
+      </section>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancelar" (click)="closeClassModal()">✕ Cerrar</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     MODAL: GESTIÓN DE INSCRIPCIONES
+════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showEnrollmentModal" (click)="closeEnrollmentModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title">👥 Gestionar Inscripciones</h2>
+        <p class="modal-subtitle">Lección: <strong>{{ selectedEnrollmentClass?.name }}</strong></p>
+      </div>
+      <button class="modal-close" (click)="closeEnrollmentModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Estudiantes disponibles -->
+      <section class="inner-panel">
+        <h3 class="inner-title">👤 Estudiantes Disponibles</h3>
+        <div class="class-list">
+          <article class="class-card" *ngFor="let student of students">
+            <div class="class-top">
+              <strong>{{ student.name }}</strong>
+              <span class="class-status-badge"
+                    [class.abierta]="!isStudentEnrolled(student.id)">
+                {{ isStudentEnrolled(student.id) ? '✅ Inscrito' : '⭕ Disponible' }}
+              </span>
+            </div>
+            <div class="class-info">
+              <span>📧 {{ student.email }}</span>
+            </div>
+            <div class="class-acciones">
+              <button class="btn-inscribir-sm"
+                      (click)="enrollStudent(student)"
+                      [disabled]="isStudentEnrolled(student.id)">
+                {{ isStudentEnrolled(student.id) ? '✅ Ya inscrito' : '+ Inscribir' }}
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Estudiantes inscritos -->
+      <section class="inner-panel">
+        <h3 class="inner-title">
+          ✅ Estudiantes Inscritos
+          <span class="count-badge">{{ classEnrollments.length }}</span>
+        </h3>
+
+        <div *ngIf="classEnrollments.length === 0" class="empty-inner">
+          <p>📭 No hay estudiantes inscritos aún.</p>
+        </div>
+
+        <div class="class-list" *ngIf="classEnrollments.length > 0">
+          <article class="class-card" *ngFor="let enrollment of classEnrollments">
+            <div class="class-top">
+              <strong>{{ enrollment.studentName || enrollment.studentId }}</strong>
+              <span class="class-status-badge"
+                    [class.abierta]="enrollment.status === 'active'">
+                {{ enrollment.status === 'active' ? '🟢 Activo' : '🔴 Inactivo' }}
+              </span>
+            </div>
+            <div class="class-info">
+              <span>📧 {{ enrollment.studentEmail || 'Sin correo' }}</span>
+              <span>📅 {{ enrollment.enrollmentDate | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="class-acciones">
+              <button class="btn-editar-sm"
+                      (click)="toggleEnrollmentStatus(enrollment)">
+                {{ enrollment.status === 'active' ? '⏸ Desactivar' : '▶ Activar' }}
+              </button>
+              <button class="btn-eliminar-sm"
+                      (click)="removeEnrollment(enrollment)">
+                🗑️ Quitar
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancelar" (click)="closeEnrollmentModal()">✕ Cerrar</button>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,354 @@
+<div class="student-dashboard">
+  <section class="hero-card">
+    <div class="hero-content">
+      <div>
+        <p class="hero-greeting">{{ getWelcomeMessage() }}, {{ studentName }}</p>
+        <h1 class="hero-title">Tu panel de aprendizaje</h1>
+        <p class="hero-subtitle">
+          Revisa tu avance, tus lecciones pendientes y continúa con tu proceso académico.
+        </p>
+      </div>
+
+      <div class="hero-actions">
+        <a routerLink="/my-lessons" class="btn btn-shimmer">
+          <i class="fas fa-book-reader"></i>
+          Ver mis lecciones
+        </a>
+        <a routerLink="/my-quizzes" class="btn btn-shimmer-green">
+          <i class="fas fa-clipboard-list"></i>
+          Ver mis cuestionarios
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <i class="fas fa-circle-exclamation"></i>
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="loading" class="loading-box">
+    <i class="fas fa-spinner fa-spin"></i>
+    Cargando tu dashboard...
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <section class="stats-grid">
+      <article class="stat-card card-blue">
+        <div class="stat-icon">
+          <i class="fas fa-layer-group"></i>
+        </div>
+        <div>
+          <div class="stat-number">{{ activeLessons.length }}</div>
+          <div class="stat-label">Lecciones activas</div>
+        </div>
+      </article>
+
+      <article class="stat-card card-green">
+        <div class="stat-icon">
+          <i class="fas fa-circle-check"></i>
+        </div>
+        <div>
+          <div class="stat-number">{{ completedLessons.length }}</div>
+          <div class="stat-label">Completadas</div>
+        </div>
+      </article>
+
+      <article class="stat-card card-orange">
+        <div class="stat-icon">
+          <i class="fas fa-person-running"></i>
+        </div>
+        <div>
+          <div class="stat-number">{{ inProgressLessons.length }}</div>
+          <div class="stat-label">En progreso</div>
+        </div>
+      </article>
+
+      <article class="stat-card card-purple">
+        <div class="stat-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div>
+          <div class="stat-number">{{ overallProgress }}%</div>
+          <div class="stat-label">Promedio general</div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Quiz Stats Section -->
+    <section *ngIf="hasQuizzes" class="stats-grid quiz-stats">
+      <article class="stat-card card-yellow">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div>
+          <div class="stat-number">{{ pendingQuizzes.length }}</div>
+          <div class="stat-label">Quizzes pendientes</div>
+        </div>
+      </article>
+
+      <article class="stat-card card-indigo">
+        <div class="stat-icon">
+          <i class="fas fa-spinner"></i>
+        </div>
+        <div>
+          <div class="stat-number">{{ inProgressQuizzes.length }}</div>
+          <div class="stat-label">En proceso</div>
+        </div>
+      </article>
+
+      <article class="stat-card card-teal">
+        <div class="stat-icon">
+          <i class="fas fa-check-double"></i>
+        </div>
+        <div>
+          <div class="stat-number">{{ completedQuizzes.length }}</div>
+          <div class="stat-label">Completados</div>
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div>
+          <div class="stat-number">{{ quizzes.length }}</div>
+          <div class="stat-label">Total de quizzes</div>
+        </div>
+      </article>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="panel-card">
+        <div class="panel-header">
+          <h2>
+            <i class="fas fa-chart-pie"></i>
+            Resumen de avance
+          </h2>
+        </div>
+
+        <div class="panel-body">
+          <div class="progress-summary">
+            <div class="overall-progress-circle">
+              <div class="circle-inner">
+                <strong>{{ overallProgress }}%</strong>
+                <span>avance</span>
+              </div>
+            </div>
+
+            <div class="overall-info">
+              <h3>Tu progreso total</h3>
+              <p>
+                Este porcentaje representa el promedio general de avance en todas tus lecciones asignadas.
+              </p>
+
+              <div class="big-progress-bar">
+                <div
+                  class="big-progress-fill"
+                  [style.width.%]="overallProgress"
+                  [style.background]="getProgressColor(overallProgress)"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-box">
+            <div class="chart-title">Distribución de estados</div>
+
+            <div class="chart-bar">
+              <div
+                class="segment completed"
+                [style.width.%]="getChartWidth(completedLessons.length)"
+                title="Completadas"
+              ></div>
+
+              <div
+                class="segment progress"
+                [style.width.%]="getChartWidth(inProgressLessons.length)"
+                title="En progreso"
+              ></div>
+
+              <div
+                class="segment assigned"
+                [style.width.%]="getChartWidth(assignedLessons.length)"
+                title="No iniciadas"
+              ></div>
+
+              <div
+                class="segment inactive"
+                [style.width.%]="getChartWidth(inactiveLessons.length)"
+                title="Inactivas"
+              ></div>
+            </div>
+
+            <div class="chart-legend">
+              <span><i class="dot completed"></i> Completadas</span>
+              <span><i class="dot progress"></i> En progreso</span>
+              <span><i class="dot assigned"></i> No iniciadas</span>
+              <span><i class="dot inactive"></i> Inactivas</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel-card">
+        <div class="panel-header">
+          <h2>
+            <i class="fas fa-hourglass-half"></i>
+            Lecciones pendientes
+          </h2>
+        </div>
+
+        <div class="panel-body">
+          <div *ngIf="pendingLessons.length === 0" class="empty-state">
+            <i class="fas fa-circle-check"></i>
+            <p>No tienes lecciones pendientes por ahora.</p>
+          </div>
+
+          <div class="lesson-list" *ngIf="pendingLessons.length > 0">
+            <article class="lesson-item" *ngFor="let lesson of pendingLessons">
+              <div class="lesson-item-top">
+                <div>
+                  <h3>{{ lesson.lessonTitle }}</h3>
+                  <p>{{ lesson.className || 'Sin clase asignada' }}</p>
+                </div>
+
+                <span class="status-chip" [ngClass]="lesson.status">
+                  {{ getStatusLabel(lesson.status) }}
+                </span>
+              </div>
+
+              <div class="mini-progress">
+                <div class="mini-progress-bar">
+                  <div
+                    class="mini-progress-fill"
+                    [style.width.%]="lesson.progressPercent"
+                    [style.background]="getProgressColor(lesson.progressPercent)"
+                  ></div>
+                </div>
+                <small>{{ lesson.progressPercent }}%</small>
+              </div>
+            </article>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Quizzes Section -->
+    <section *ngIf="hasQuizzes" class="panel-card quiz-panel">
+      <div class="panel-header">
+        <h2>
+          <i class="fas fa-clipboard-list"></i>
+          Cuestionarios
+        </h2>
+        <a routerLink="/my-quizzes" class="view-all-link">Ver todos <i class="fas fa-arrow-right"></i></a>
+      </div>
+
+      <div class="panel-body">
+        <!-- Pending Quizzes -->
+        <div *ngIf="pendingQuizzes.length > 0" class="quiz-category">
+          <h3><i class="fas fa-clock"></i> Pendientes</h3>
+          <div class="quiz-list">
+            <article *ngFor="let quiz of pendingQuizzes" class="quiz-item">
+              <div class="quiz-item-info">
+                <span class="quiz-title">{{ quiz.title }}</span>
+                <span class="quiz-meta">
+                  {{ quiz.questionsCount }} preguntas · {{ quiz.timeLimit }} min · Aprobar: {{ quiz.passingScore }}%
+                </span>
+              </div>
+              <a [routerLink]="['/quiz', quiz.quizId]" class="btn btn-sm btn-primary">
+                <i class="fas fa-play"></i> Comenzar
+              </a>
+            </article>
+          </div>
+        </div>
+
+        <!-- In Progress Quizzes -->
+        <div *ngIf="inProgressQuizzes.length > 0" class="quiz-category">
+          <h3><i class="fas fa-spinner"></i> En proceso</h3>
+          <div class="quiz-list">
+            <article *ngFor="let quiz of inProgressQuizzes" class="quiz-item">
+              <div class="quiz-item-info">
+                <span class="quiz-title">{{ quiz.title }}</span>
+                <span class="quiz-meta">
+                  Mejor nota: {{ quiz.bestScore }}% · {{ quiz.attemptCount }} intento(s)
+                </span>
+              </div>
+              <a [routerLink]="['/quiz', quiz.quizId]" class="btn btn-sm btn-secondary">
+                <i class="fas fa-redo"></i> Continuar
+              </a>
+            </article>
+          </div>
+        </div>
+
+        <!-- Completed Quizzes -->
+        <div *ngIf="completedQuizzes.length > 0" class="quiz-category">
+          <h3><i class="fas fa-check-circle"></i> Completados</h3>
+          <div class="quiz-list">
+            <article *ngFor="let quiz of completedQuizzes" class="quiz-item completed">
+              <div class="quiz-item-info">
+                <span class="quiz-title">{{ quiz.title }}</span>
+                <span class="quiz-meta">
+                  Nota final: {{ quiz.bestScore }}%
+                </span>
+              </div>
+              <a [routerLink]="['/quiz', quiz.quizId]" class="btn btn-sm btn-outline">
+                <i class="fas fa-eye"></i> Ver resultado
+              </a>
+            </article>
+          </div>
+        </div>
+
+        <div *ngIf="!hasQuizzes" class="empty-state">
+          <i class="fas fa-clipboard"></i>
+          <p>No tienes cuestionarios asignados todavía.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-card">
+      <div class="panel-header">
+        <h2>
+          <i class="fas fa-clock-rotate-left"></i>
+          Actividad reciente
+        </h2>
+      </div>
+
+      <div class="panel-body">
+        <div *ngIf="recentLessons.length === 0" class="empty-state">
+          <i class="fas fa-book-open"></i>
+          <p>Aún no tienes actividad reciente.</p>
+        </div>
+
+        <div class="recent-table-wrap" *ngIf="recentLessons.length > 0">
+          <table class="recent-table">
+            <thead>
+              <tr>
+                <th>Lección</th>
+                <th>Clase</th>
+                <th>Estado</th>
+                <th>Progreso</th>
+                <th>Último acceso</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let lesson of recentLessons">
+                <td>{{ lesson.lessonTitle }}</td>
+                <td>{{ lesson.className || '-' }}</td>
+                <td>
+                  <span class="status-chip" [ngClass]="lesson.status">
+                    {{ getStatusLabel(lesson.status) }}
+                  </span>
+                </td>
+                <td>{{ lesson.progressPercent }}%</td>
+                <td>
+                  {{ lesson.lastAccessedAt ? (lesson.lastAccessedAt | date:'dd/MM/yyyy HH:mm') : 'Sin acceso' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

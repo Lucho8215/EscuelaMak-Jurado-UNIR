@@ -1,0 +1,267 @@
+<div class="page">
+
+  <!-- ENCABEZADO -->
+  <div class="page-header">
+    <a routerLink="/dashboard" class="btn-back">← Volver al Panel</a>
+    <h1>📖 Mis Lecciones</h1>
+    <p>Aquí están todas tus lecciones asignadas. ¡Aprende a tu ritmo!</p>
+  </div>
+
+  <!-- MENSAJES -->
+  <div *ngIf="errorMessage" class="alerta error">⚠️ {{ errorMessage }}</div>
+  <div *ngIf="successMessage" class="alerta exito">✅ {{ successMessage }}</div>
+
+  <!-- RESUMEN GENERAL -->
+  <div class="resumen-grid" *ngIf="!loading && lessons.length > 0">
+    <div class="resumen-card azul">
+      <span class="resumen-numero">{{ lessons.length }}</span>
+      <span class="resumen-label">Total lecciones</span>
+    </div>
+    <div class="resumen-card verde">
+      <span class="resumen-numero">{{ getCompletedCount() }}</span>
+      <span class="resumen-label">Completadas</span>
+    </div>
+    <div class="resumen-card amarillo">
+      <span class="resumen-numero">{{ getInProgressCount() }}</span>
+      <span class="resumen-label">En progreso</span>
+    </div>
+    <div class="resumen-card gris">
+      <span class="resumen-numero">{{ getPendingCount() }}</span>
+      <span class="resumen-label">Por iniciar</span>
+    </div>
+  </div>
+
+  <!-- BARRA DE PROGRESO GENERAL -->
+  <div class="progreso-general" *ngIf="!loading && lessons.length > 0">
+    <div class="progreso-header">
+      <span>🎯 Tu progreso general</span>
+      <span class="progreso-pct">{{ getOverallProgress() }}%</span>
+    </div>
+    <div class="barra-grande">
+      <div class="barra-fill"
+           [style.width.%]="getOverallProgress()"
+           [style.background]="getProgressColor(getOverallProgress())">
+      </div>
+    </div>
+  </div>
+
+  <!-- CARGANDO -->
+  <div *ngIf="loading" class="estado-vacio">
+    <div class="spinner">⏳</div>
+    <p>Cargando tus lecciones...</p>
+  </div>
+
+  <!-- SIN LECCIONES -->
+  <div *ngIf="!loading && lessons.length === 0" class="estado-vacio">
+    <div class="vacio-emoji">📭</div>
+    <h3>¡Aún no tienes lecciones asignadas!</h3>
+    <p>Tu profesor te asignará lecciones pronto. ¡Mantente atento!</p>
+  </div>
+
+  <!-- GRID DE LECCIONES -->
+  <div class="lecciones-grid" *ngIf="!loading && lessons.length > 0">
+    <article class="leccion-card"
+             *ngFor="let lesson of lessons"
+             [class.completada]="lesson.status === 'completed'"
+             [class.en-progreso]="lesson.status === 'in_progress'"
+             (click)="openLesson(lesson)">
+
+      <!-- Imagen de portada -->
+      <div class="leccion-imagen">
+        <img *ngIf="lesson.coverImageUrl" [src]="lesson.coverImageUrl" [alt]="lesson.lessonTitle">
+        <div *ngIf="!lesson.coverImageUrl" class="leccion-emoji-portada">
+          {{ lesson.status === 'completed' ? '🏆' : lesson.status === 'in_progress' ? '📖' : '📚' }}
+        </div>
+
+        <!-- Badge de estado -->
+        <span class="estado-badge" [class]="lesson.status">
+          {{ getStatusLabel(lesson.status) }}
+        </span>
+      </div>
+
+      <!-- Info de la lección -->
+      <div class="leccion-info">
+        <p class="leccion-clase">{{ lesson.className }}</p>
+        <h3 class="leccion-titulo">{{ lesson.lessonTitle }}</h3>
+        <p class="leccion-resumen">{{ lesson.summary || 'Sin resumen disponible.' }}</p>
+
+        <!-- Indicadores de contenido -->
+        <div class="leccion-recursos">
+          <span *ngIf="lesson.videoUrl" class="recurso-chip video">▶ Video</span>
+          <span *ngIf="lesson.resourceLink && isVideoResource(lesson.resourceLink)" class="recurso-chip video">▶ Video</span>
+          <span *ngIf="lesson.resourceLink && !isVideoResource(lesson.resourceLink)" class="recurso-chip enlace">🔗 Enlace</span>
+          <span *ngIf="lesson.resourceFileUrl" class="recurso-chip archivo">📄 Archivo</span>
+          <span *ngIf="lesson.content" class="recurso-chip contenido">📝 Contenido</span>
+        </div>
+
+        <!-- Barra de progreso -->
+        <div class="progreso-box">
+          <div class="barra-progreso">
+            <div class="barra-fill-sm"
+                 [style.width.%]="lesson.progressPercent"
+                 [style.background]="getProgressColor(lesson.progressPercent)">
+            </div>
+          </div>
+          <small>{{ lesson.progressPercent }}%</small>
+        </div>
+
+       <!-- Botón lector de voz en la tarjeta -->
+        <button *ngIf="ttsSupported"
+                class="btn-leer"
+                [class.leyendo]="leyendo && selectedLesson?.id === lesson.id"
+                (click)="$event.stopPropagation(); leerLeccion(lesson)"
+                title="Escuchar esta lección">
+          {{ (leyendo && selectedLesson?.id === lesson.id) ? '⏹ Detener' : '🔊 Leer en voz alta' }}
+        </button>
+      
+        
+      </div>
+    </article>
+  </div>
+
+  <!-- ============================================
+       MODAL DE ESTUDIO - Se abre al clicar
+  ============================================= -->
+  <div class="modal-overlay" *ngIf="selectedLesson" (click)="closeLesson()">
+    <div class="modal-estudio" (click)="$event.stopPropagation()">
+
+      <!-- Header del modal -->
+      <div class="modal-top">
+        <div class="modal-top-info">
+          <span class="modal-clase">{{ selectedLesson.className }}</span>
+          <h2>{{ selectedLesson.lessonTitle }}</h2>
+          <span class="estado-badge" [class]="selectedLesson.status">
+            {{ getStatusLabel(selectedLesson.status) }}
+          </span>
+        </div>
+        <button class="btn-cerrar-modal" (click)="closeLesson()">✕</button>
+      </div>
+
+      <!-- Mensaje de éxito -->
+      <div *ngIf="successMessage" class="alerta exito">✅ {{ successMessage }}</div>
+
+      <!-- VIDEO DE YOUTUBE -->
+      <div class="seccion-video" *ngIf="selectedLesson.videoUrl">
+        <h3>🎬 Video de la Lección</h3>
+        <div class="video-container">
+          <iframe
+            [src]="getVideoEmbedUrl(selectedLesson.videoUrl)"
+            frameborder="0"
+            allowfullscreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope">
+          </iframe>
+        </div>
+      </div>
+
+      <!-- IMAGEN DE PORTADA -->
+      <div *ngIf="selectedLesson.coverImageUrl && !selectedLesson.videoUrl" class="seccion-imagen">
+        <img [src]="selectedLesson.coverImageUrl" [alt]="selectedLesson.lessonTitle">
+      </div>
+
+      <!-- RESUMEN Y OBJETIVO -->
+      <div class="seccion-texto" *ngIf="selectedLesson.summary || selectedLesson.objective">
+        <div class="texto-card" *ngIf="selectedLesson.summary">
+          <h3>📋 Resumen</h3>
+          <p>{{ selectedLesson.summary }}</p>
+        </div>
+        <div class="texto-card" *ngIf="selectedLesson.objective">
+          <h3>🎯 Objetivo</h3>
+          <p>{{ selectedLesson.objective }}</p>
+        </div>
+      </div>
+
+      <!-- CONTENIDO PRINCIPAL -->
+      <div class="seccion-contenido" *ngIf="selectedLesson.content">
+        <h3>📝 Contenido</h3>
+        <div class="contenido-texto">{{ selectedLesson.content }}</div>
+      </div>
+
+      <!-- RECURSOS -->
+      <div class="seccion-recursos" *ngIf="selectedLesson.resourceLink || selectedLesson.resourceFileUrl">
+        <h3>📎 Recursos de Apoyo</h3>
+        <!-- Si el recurso es un video, mostrarlo embebido -->
+        <div *ngIf="isVideoResource(selectedLesson?.resourceLink)" class="media-block" style="margin-bottom: 1rem;">
+          <h4 style="margin-bottom: 0.5rem;">🎬 Video</h4>
+          <div class="video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px;">
+            <iframe 
+                 [src]="getVideoEmbedUrl(selectedLesson?.resourceLink ?? '')"
+              style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+              frameborder="0"
+              allowfullscreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope">
+            </iframe>
+          </div>
+          <p style="font-size: 0.85rem; color: #888; margin-top: 0.5rem;">Video embebido en la página.</p>
+        </div>
+        <div class="recursos-botones">
+          <a *ngIf="selectedLesson.resourceLink && !isVideoResource(selectedLesson?.resourceLink)"
+             [href]="selectedLesson.resourceLink"
+             target="_blank"
+             class="btn-recurso enlace">
+            🔗 Abrir Recurso en Línea
+          </a>
+          <a *ngIf="selectedLesson.resourceFileUrl"
+             [href]="selectedLesson.resourceFileUrl"
+             target="_blank"
+             class="btn-recurso archivo">
+            📄 Descargar Archivo
+          </a>
+        </div>
+      </div>
+
+      <!-- PROGRESO Y ACCIONES -->
+      <!-- BOTÓN LECTOR DE VOZ EN EL MODAL -->
+      <div class="seccion-voz" *ngIf="ttsSupported">
+        <button class="btn-voz-modal"
+                [class.leyendo]="leyendo"
+                (click)="leerLeccion(selectedLesson)">
+          {{ leyendo ? '⏹ Detener lectura' : '🔊 Leer contenido en voz alta' }}
+        </button>
+        <p class="voz-hint">El navegador leerá el resumen, objetivo y contenido de esta lección.</p>
+      </div>
+
+      <!-- PROGRESO Y ACCIONES -->
+      <div class="seccion-progreso">
+        <h3>📊 Tu Progreso en esta Lección</h3>
+
+        <div class="progreso-grande">
+          <div class="barra-grande-modal">
+            <div class="barra-fill-modal"
+                 [style.width.%]="selectedLesson.progressPercent"
+                 [style.background]="getProgressColor(selectedLesson.progressPercent)">
+            </div>
+          </div>
+          <span class="progreso-pct-grande">{{ selectedLesson.progressPercent }}%</span>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="acciones-estudio">
+
+          <button class="btn-accion continuar"
+                  *ngIf="selectedLesson.status !== 'completed'"
+                  [disabled]="actionLoading"
+                  (click)="continueLesson(selectedLesson)">
+            ▶ Avanzar +20%
+          </button>
+
+          <button class="btn-accion completar"
+                  *ngIf="selectedLesson.status !== 'completed'"
+                  [disabled]="actionLoading"
+                  (click)="completeLesson(selectedLesson)">
+            🏆 Marcar como Completada
+          </button>
+
+          <div class="completado-mensaje" *ngIf="selectedLesson.status === 'completed'">
+            🎉 ¡Felicitaciones! Completaste esta lección el
+            {{ selectedLesson.completedAt | date:'dd/MM/yyyy' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Cerrar -->
+      <button class="btn-cerrar-abajo" (click)="closeLesson()">Cerrar</button>
+
+    </div>
+  </div>
+
+</div>

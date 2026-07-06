@@ -1,0 +1,667 @@
+<div class="quiz-management">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-text">
+        <h1>
+          <i class="fas fa-brain"></i>
+          Gestión de Cuestionarios
+        </h1>
+        <p>Crea, administra y asigna cuestionarios a tus estudiantes</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" (click)="activeTab = 'list'; resetForm()">
+          <i class="fas fa-list"></i> Ver Cuestionarios
+        </button>
+        <button class="btn btn-info" (click)="openRequestsTab()">
+          <i class="fas fa-envelope"></i> Solicitudes
+        </button>
+        <button class="btn btn-warning" (click)="activeTab = 'import'; resetForm()">
+          <i class="fas fa-file-pdf"></i> Importar PDF
+        </button>
+        <button class="btn btn-success" (click)="activeTab = 'create'; resetForm()">
+          <i class="fas fa-plus-circle"></i> Nuevo Cuestionario
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <i class="fas fa-exclamation-triangle"></i> {{ errorMessage }}
+  </div>
+
+  <!-- TAB: Lista de Cuestionarios -->
+  <section *ngIf="activeTab === 'list'" class="tab-content">
+    <!-- Search and Filters -->
+    <div class="filters-bar">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar cuestionarios...">
+      </div>
+      <div class="filter-group">
+        <select [(ngModel)]="filterCategory">
+          <option value="">Todas las categorías</option>
+          <option *ngFor="let cat of categories" [value]="cat">{{ cat | titlecase }}</option>
+        </select>
+        <select [(ngModel)]="filterDifficulty">
+          <option value="">Todas las dificultades</option>
+          <option value="easy">Fácil</option>
+          <option value="medium">Medio</option>
+          <option value="hard">Difícil</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading-container">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Cargando cuestionarios...</p>
+    </div>
+
+    <!-- Quiz List -->
+    <div *ngIf="!loading" class="quiz-grid">
+      <div *ngFor="let quiz of filteredQuizzes" class="quiz-card">
+        <div class="quiz-card-header">
+          <div class="quiz-badges">
+            <span class="badge" [class]="getDifficultyClass(quiz.difficulty)">
+              {{ quiz.difficulty | titlecase }}
+            </span>
+            <span class="badge badge-category">{{ quiz.category | titlecase }}</span>
+          </div>
+          <div class="quiz-status" [class.active]="quiz.isEnabled">
+            <i class="fas" [class.fa-eye]="quiz.isEnabled" [class.fa-eye-slash]="!quiz.isEnabled"></i>
+            {{ quiz.isEnabled ? 'Activo' : 'Inactivo' }}
+          </div>
+        </div>
+
+        <div class="quiz-card-body">
+          <h3>{{ quiz.title }}</h3>
+          <p class="quiz-description">{{ quiz.description }}</p>
+          
+          <div class="quiz-meta">
+            <div class="meta-item">
+              <i class="fas fa-question-circle"></i>
+              <span>{{ quiz.questions ? quiz.questions.length : 0 }} preguntas</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-clock"></i>
+              <span>{{ quiz.timeLimit }} min</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-percentage"></i>
+              <span>{{ quiz.passingScore }}% para aprobar</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="quiz-card-actions">
+          <button class="btn btn-sm btn-outline" (click)="openAssignTab(quiz)" title="Asignar">
+            <i class="fas fa-user-plus"></i> Asignar
+          </button>
+          <button class="btn btn-sm btn-outline" (click)="editQuiz(quiz)" title="Editar">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn btn-sm btn-outline" (click)="toggleQuiz(quiz)" [title]="quiz.isEnabled ? 'Desactivar' : 'Activar'">
+            <i class="fas" [class.fa-toggle-on]="quiz.isEnabled" [class.fa-toggle-off]="!quiz.isEnabled"></i>
+          </button>
+          <button class="btn btn-sm btn-danger" (click)="deleteQuiz(quiz.id)" title="Eliminar">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="filteredQuizzes.length === 0" class="empty-state">
+        <i class="fas fa-folder-open"></i>
+        <h3>No hay cuestionarios</h3>
+        <p>Crea tu primer cuestionario para comenzar</p>
+        <button class="btn btn-success" (click)="activeTab = 'create'; resetForm()">
+          <i class="fas fa-plus"></i> Crear Cuestionario
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB: Crear/Editar Cuestionario -->
+  <section *ngIf="activeTab === 'create'" class="tab-content">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>
+          <i class="fas" [class.fa-edit]="editingQuiz" [class.fa-plus-circle]="!editingQuiz"></i>
+          {{ editingQuiz ? 'Editar Cuestionario' : 'Nuevo Cuestionario' }}
+        </h2>
+      </div>
+
+      <form (ngSubmit)="saveQuiz()" #quizForm="ngForm">
+        <!-- Basic Info -->
+        <div class="form-section">
+          <h3>Información General</h3>
+          
+          <div class="form-group">
+            <label>Título del Cuestionario *</label>
+            <input type="text" [(ngModel)]="newQuiz.title" name="title" required 
+              class="form-input" placeholder="Ej: Evaluación de Matemáticas - Unidad 1">
+          </div>
+
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea [(ngModel)]="newQuiz.description" name="description" 
+              class="form-input" rows="3" placeholder="Describe el propósito de este cuestionario..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Categoría</label>
+              <select [(ngModel)]="newQuiz.category" name="category" class="form-input">
+                <option value="general">General</option>
+                <option value="mathematics">Matemáticas</option>
+                <option value="science">Ciencias</option>
+                <option value="language">Lenguaje</option>
+                <option value="history">Historia</option>
+                <option value="geography">Geografía</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Dificultad</label>
+              <select [(ngModel)]="newQuiz.difficulty" name="difficulty" class="form-input">
+                <option value="easy">Fácil</option>
+                <option value="medium">Medio</option>
+                <option value="hard">Difícil</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Tiempo (minutos)</label>
+              <input type="number" [(ngModel)]="newQuiz.timeLimit" name="timeLimit" 
+                class="form-input" min="1" max="180">
+            </div>
+
+            <div class="form-group">
+              <label>Puntaje para aprobar (%)</label>
+              <input type="number" [(ngModel)]="newQuiz.passingScore" name="passingScore" 
+                class="form-input" min="1" max="100">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" [(ngModel)]="newQuiz.isEnabled" name="isEnabled">
+                <span class="checkmark"></span>
+                Activo (visible para estudiantes)
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" [(ngModel)]="newQuiz.isVisible" name="isVisible">
+                <span class="checkmark"></span>
+                Visible públicamente
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Questions -->
+        <div class="form-section">
+          <div class="section-header">
+            <h3>Preguntas ({{ newQuiz.questions?.length || 0 }})</h3>
+            <button type="button" class="btn btn-success btn-sm" (click)="addQuestion()">
+              <i class="fas fa-plus"></i> Agregar Pregunta
+            </button>
+          </div>
+
+          <div *ngIf="!newQuiz.questions?.length" class="empty-questions">
+            <i class="fas fa-lightbulb"></i>
+            <p>Agrega preguntas a tu cuestionario</p>
+            <button type="button" class="btn btn-primary" (click)="addQuestion()">
+              <i class="fas fa-plus"></i> Primera Pregunta
+            </button>
+          </div>
+
+          <div class="questions-list">
+            <div *ngFor="let question of newQuiz.questions; let i = index" class="question-card">
+              <div class="question-header">
+                <h4>Pregunta {{ i + 1 }}</h4>
+                <button type="button" class="btn btn-danger btn-sm" (click)="removeQuestion(i)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+
+              <div class="form-group">
+                <label>Texto de la pregunta *</label>
+                <textarea [(ngModel)]="question.text" 
+                  [name]="'question-' + i" required class="form-input question-textarea"
+                  placeholder="Escribe la pregunta aquí..." rows="2"></textarea>
+              </div>
+
+              <div class="options-section">
+                <label>Opciones de respuesta *</label>
+                <div *ngFor="let option of question.options; let j = index" class="option-row">
+                  <div class="radio-wrapper">
+                    <input type="radio" [name]="'correct-' + i" [value]="j" 
+                      [(ngModel)]="question.correctAnswer">
+                    <span class="option-letter">{{ ['A','B','C','D','E'][j] }}</span>
+                  </div>
+                  <textarea [(ngModel)]="question.options[j]" 
+                    [name]="'option-' + i + '-' + j" required class="form-input option-textarea"
+                    [placeholder]="'Escribe la respuesta ' + (j+1) + '...'" rows="2"></textarea>
+                  <button *ngIf="question.options && question.options.length > 2" 
+                    type="button" class="btn-icon" (click)="removeOption(question, j)">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                <button *ngIf="question.options && question.options.length < 5"
+                  type="button" class="btn btn-sm btn-outline" (click)="addOption(question)">
+                  <i class="fas fa-plus"></i> Agregar opción
+                </button>
+                <p class="help-text">Selecciona la respuesta correcta</p>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Explicación (opcional)</label>
+                  <textarea [(ngModel)]="question.explanation" 
+                    [name]="'explanation-' + i" class="form-input"
+                    placeholder="Explica por qué es la respuesta correcta..." rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                  <label>Puntos</label>
+                  <input type="number" [(ngModel)]="question.points" 
+                    [name]="'points-' + i" class="form-input" min="1" max="100">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="activeTab = 'list'; resetForm()">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="!quizForm.form.valid || loading">
+            <i class="fas fa-save"></i>
+            {{ loading ? 'Guardando...' : (editingQuiz ? 'Actualizar' : 'Crear Cuestionario') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- TAB: Importar PDF -->
+  <section *ngIf="activeTab === 'import'" class="tab-content">
+    <div class="form-card">
+      <div class="form-header">
+        <h2>
+          <i class="fas fa-file-pdf"></i>
+          Importar desde PDF
+        </h2>
+        <p class="form-description">
+          Sube un archivo PDF con preguntas y el sistema generará un cuestionario automáticamente.
+          También puedes pegar el texto manualmente.
+        </p>
+      </div>
+
+      <div class="import-container">
+        <!-- File Upload -->
+        <div class="upload-section">
+          <div class="upload-zone" 
+               [class.dragover]="isDragOver"
+               (dragover)="onDragOver($event)"
+               (dragleave)="onDragLeave($event)"
+               (drop)="onDrop($event)">
+            <input type="file" #fileInput accept=".pdf,.txt" (change)="onFileSelected($event)" hidden>
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h3>Arrastra un archivo aquí</h3>
+            <p>o</p>
+            <button type="button" class="btn btn-primary" (click)="fileInput.click()">
+              <i class="fas fa-folder-open"></i> Seleccionar Archivo
+            </button>
+            <p class="upload-hint">PDF o TXT (máx. 10MB)</p>
+          </div>
+
+          <div *ngIf="selectedFile" class="selected-file">
+            <i class="fas fa-file-pdf"></i>
+            <span>{{ selectedFile.name }}</span>
+            <button type="button" class="btn-icon" (click)="removeFile()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Text Input Alternative -->
+        <div class="text-input-section">
+          <h3><i class="fas fa-paste"></i> O pega el contenido directamente</h3>
+          <textarea [(ngModel)]="importText" 
+            class="form-input import-textarea"
+            placeholder="Pega aquí el texto del cuestionario...
+
+Ejemplo de formato:
+1. ¿Cuál es la capital de Francia?
+A) Madrid
+B) París
+C) Roma
+D) Lisboa
+Respuesta: B
+
+2. ¿Cuántos planetas tiene el sistema solar?
+A) 7
+B) 8
+C) 9
+D) 10
+Respuesta: B"
+            rows="15"></textarea>
+        </div>
+
+        <!-- Import Options -->
+        <div class="import-options">
+          <div class="form-group">
+            <label>¿Cuántas preguntas generar?</label>
+            <input type="number" [(ngModel)]="importQuestionCount" 
+              class="form-input" min="1" max="50" placeholder="10">
+          </div>
+          <div class="form-group">
+            <label>Dificultad</label>
+            <select [(ngModel)]="importDifficulty" class="form-input">
+              <option value="easy">Fácil</option>
+              <option value="medium">Medio</option>
+              <option value="hard">Difícil</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Categoría</label>
+            <select [(ngModel)]="importCategory" class="form-input">
+              <option value="general">General</option>
+              <option value="mathematics">Matemáticas</option>
+              <option value="science">Ciencias</option>
+              <option value="language">Lenguaje</option>
+              <option value="history">Historia</option>
+              <option value="geography">Geografía</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Generate Button -->
+        <div class="import-actions">
+          <button type="button" class="btn btn-secondary" (click)="activeTab = 'list'">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="button" class="btn btn-warning" 
+            [disabled]="(!selectedFile && !importText) || importing"
+            (click)="generateFromPDF()">
+            <i class="fas fa-magic"></i>
+            {{ importing ? 'Generando...' : 'Generar Cuestionario' }}
+          </button>
+        </div>
+
+        <!-- Preview -->
+        <div *ngIf="generatedQuestions.length > 0" class="generated-preview">
+          <h3><i class="fas fa-eye"></i> Vista Previa ({{ generatedQuestions.length }} preguntas)</h3>
+          <div class="preview-questions">
+            <div *ngFor="let q of generatedQuestions; let i = index" class="preview-question">
+              <div class="preview-q-header">
+                <span class="q-number">Pregunta {{ i + 1 }}</span>
+                <span class="q-points">{{ q.points }} pts</span>
+              </div>
+              <p class="q-text">{{ q.text }}</p>
+              <div class="q-options">
+                <div *ngFor="let opt of q.options; let j = index" 
+                     class="q-option" [class.correct]="j === q.correctAnswer">
+                  <span class="opt-letter">{{ ['A','B','C','D'][j] }}</span>
+                  <span class="opt-text">{{ opt }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="preview-actions">
+            <button type="button" class="btn btn-secondary" (click)="generatedQuestions = []">
+              <i class="fas fa-trash"></i> Descartar
+            </button>
+            <button type="button" class="btn btn-success" (click)="saveGeneratedQuiz()" [disabled]="loading">
+              <i class="fas fa-save"></i> {{ loading ? 'Creando...' : 'Crear Cuestionario' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB: Asignar Cuestionario -->
+  <section *ngIf="activeTab === 'assign'" class="tab-content">
+    <div class="assign-container">
+      <div class="assign-header">
+        <button class="btn btn-outline" (click)="activeTab = 'list'">
+          <i class="fas fa-arrow-left"></i> Volver
+        </button>
+        <h2>
+          <i class="fas fa-user-plus"></i>
+          Asignar: {{ selectedQuiz?.title }}
+        </h2>
+      </div>
+
+      <div class="assign-content">
+        <!-- Student Selection -->
+        <div class="student-selection">
+          <h3>Seleccionar Estudiantes</h3>
+          
+          <div class="selection-actions">
+            <button class="btn btn-sm btn-outline" (click)="selectAllStudents()">
+              <i class="fas" [class.fa-check-square]="selectedStudentIds.length === students.length" 
+                 [class.fa-square]="selectedStudentIds.length !== students.length"></i>
+              {{ selectedStudentIds.length === students.length ? 'Deseleccionar todos' : 'Seleccionar todos' }}
+            </button>
+            <span class="selection-count">{{ selectedStudentIds.length }} estudiante(s) seleccionado(s)</span>
+          </div>
+
+          <div class="student-list">
+            <div *ngFor="let student of students" 
+                 class="student-item" 
+                 [class.selected]="selectedStudentIds.includes(student.id)"
+                 (click)="toggleStudentSelection(student.id)">
+              <div class="student-avatar">
+                <i class="fas fa-user-graduate"></i>
+              </div>
+              <div class="student-info">
+                <span class="student-name">{{ student.name }}</span>
+                <span class="student-email">{{ student.email }}</span>
+              </div>
+              <div class="check-icon">
+                <i class="fas" [class.fa-check-circle]="selectedStudentIds.includes(student.id)"
+                   [class.fa-circle]="!selectedStudentIds.includes(student.id)"></i>
+              </div>
+            </div>
+
+            <div *ngIf="students.length === 0" class="empty-students">
+              <i class="fas fa-users-slash"></i>
+              <p>No hay estudiantes disponibles</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Fecha límite (opcional)</label>
+            <input type="date" [(ngModel)]="dueDate" class="form-input">
+          </div>
+
+          <button class="btn btn-primary btn-lg" (click)="assignQuiz()" 
+            [disabled]="selectedStudentIds.length === 0 || loading">
+            <i class="fas fa-paper-plane"></i>
+            {{ loading ? 'Asignando...' : 'Asignar a ' + selectedStudentIds.length + ' estudiante(s)' }}
+          </button>
+        </div>
+
+        <!-- Current Assignments -->
+        <div class="current-assignments">
+          <h3>Estudiantes Asignados</h3>
+          
+          <div *ngIf="loadingAssignments" class="loading-container">
+            <i class="fas fa-spinner fa-spin"></i>
+          </div>
+
+          <div *ngIf="!loadingAssignments" class="assignments-list">
+            <div *ngFor="let assignment of assignments" class="assignment-item">
+              <div class="assignment-student">
+                <div class="student-avatar small">
+                  <i class="fas fa-user"></i>
+                </div>
+                <div>
+                  <span class="student-name">{{ assignment.student?.name || 'Estudiante' }}</span>
+                  <span class="student-email">{{ assignment.student?.email || '' }}</span>
+                </div>
+              </div>
+              
+              <div class="assignment-status">
+                <span class="status-badge" [class]="getStatusClass(assignment)">
+                  <i class="fas" [class]="getStatusIcon(assignment)"></i>
+                  {{ assignment.isCompleted ? 'Completado' : (assignment.bestScore !== undefined ? 'En progreso' : 'Pendiente') }}
+                </span>
+                <span *ngIf="assignment.bestScore !== undefined" class="score">
+                  Mejor nota: {{ assignment.bestScore }}%
+                </span>
+              </div>
+
+              <div class="assignment-actions">
+                <button class="btn-icon" (click)="removeAssignment(assignment.id)" title="Eliminar">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="assignments.length === 0" class="empty-assignments">
+              <i class="fas fa-user-plus"></i>
+              <p>Este cuestionario no tiene estudiantes asignados</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB: Solicitudes de Recursos -->
+  <section *ngIf="activeTab === 'requests'" class="tab-content">
+    <div class="requests-container">
+      <div class="requests-header">
+        <button class="btn btn-outline" (click)="activeTab = 'list'">
+          <i class="fas fa-arrow-left"></i> Volver
+        </button>
+        <h2>
+          <i class="fas fa-envelope"></i>
+          Solicitudes de Recursos
+        </h2>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="loadingRequests" class="loading-container">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Cargando solicitudes...</p>
+      </div>
+
+      <!-- Requests List -->
+      <div *ngIf="!loadingRequests" class="requests-list">
+        <div *ngFor="let request of resourceRequests" class="request-card">
+          <div class="request-header">
+            <div class="request-type">
+              <i class="fas" [class]="getRequestTypeIcon(request.requestType)"></i>
+              <span>{{ getRequestTypeLabel(request.requestType) }}</span>
+            </div>
+            <span class="status-badge" [class]="getRequestStatusClass(request.status)">
+              {{ request.status | titlecase }}
+            </span>
+          </div>
+
+          <div class="request-body">
+            <div class="request-student">
+              <i class="fas fa-user"></i>
+              <span>{{ request.student?.name || 'Estudiante' }}</span>
+              <small>{{ request.student?.email }}</small>
+            </div>
+            <div class="request-quiz">
+              <i class="fas fa-clipboard"></i>
+              <span>{{ request.quiz?.title || 'Cuestionario' }}</span>
+            </div>
+            <div *ngIf="request.question" class="request-question">
+              <i class="fas fa-question"></i>
+              <span>{{ request.question.text | slice:0:100 }}...</span>
+            </div>
+          </div>
+
+          <div class="request-description">
+            <strong>Descripción:</strong>
+            <p>{{ request.description }}</p>
+          </div>
+
+          <div *ngIf="request.response" class="request-response">
+            <strong>Respuesta:</strong>
+            <p>{{ request.response }}</p>
+          </div>
+
+          <div class="request-footer">
+            <span class="request-date">
+              <i class="fas fa-clock"></i>
+              {{ formatDate(request.createdAt) }}
+            </span>
+            <button *ngIf="request.status === 'pending'" 
+                    class="btn btn-sm btn-primary"
+                    (click)="openRespondRequestModal(request)">
+              <i class="fas fa-reply"></i> Responder
+            </button>
+            <button *ngIf="request.status === 'approved'" 
+                    class="btn btn-sm btn-success"
+                    (click)="openRespondRequestModal(request)">
+              <i class="fas fa-check"></i> Marcar completada
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="resourceRequests.length === 0" class="empty-state">
+          <i class="fas fa-envelope-open"></i>
+          <h3>No hay solicitudes</h3>
+          <p>Las solicitudes de recursos aparecerán aquí</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal para responder solicitud -->
+  <div *ngIf="selectedRequest" class="modal-overlay" (click)="closeRequestModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Responder Solicitud</h3>
+        <button class="btn-icon" (click)="closeRequestModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="request-info">
+          <p><strong>Estudiante:</strong> {{ selectedRequest.student?.name }}</p>
+          <p><strong>Tipo:</strong> {{ getRequestTypeLabel(selectedRequest.requestType) }}</p>
+          <p><strong>Descripción:</strong> {{ selectedRequest.description }}</p>
+        </div>
+        <div class="form-group">
+          <label>Respuesta</label>
+          <textarea [(ngModel)]="requestResponse" rows="4" 
+                    class="form-input" 
+                    placeholder="Escribe tu respuesta..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeRequestModal()">Cancelar</button>
+        <button class="btn btn-danger" (click)="rejectRequest()">
+          <i class="fas fa-times"></i> Rechazar
+        </button>
+        <button class="btn btn-primary" (click)="approveRequest()">
+          <i class="fas fa-check"></i> Aprobar
+        </button>
+        <button *ngIf="selectedRequest.status === 'approved'" 
+                class="btn btn-success" 
+                (click)="completeRequest()">
+          <i class="fas fa-check-double"></i> Completar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,199 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+/* Contenedor general del layout */
+.layout-shell {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+  background: var(--color-bg, #f4f6fb);
+}
+
+/* Sidebar lateral */
+.sidebar {
+  background: linear-gradient(180deg, var(--color-primary, #667eea) 0%, var(--color-secondary, #764ba2) 100%);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1rem;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Marca del sistema */
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.brand-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.brand-text h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.brand-text p {
+  margin: 0.2rem 0 0;
+  opacity: 0.8;
+  font-size: 0.85rem;
+}
+
+/* Caja del usuario */
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding: 0.85rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.user-avatar {
+  font-size: 2rem;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-info strong {
+  font-size: 0.95rem;
+}
+
+.user-info span {
+  font-size: 0.82rem;
+  opacity: 0.85;
+}
+
+/* Navegación lateral */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  flex: 1;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateX(4px);
+}
+
+.active-link {
+  background: rgba(255, 255, 255, 0.22);
+  font-weight: 700;
+}
+
+/* Pie del sidebar */
+.sidebar-footer {
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.logout-btn {
+  width: 100%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Contenido principal */
+.layout-content {
+  padding: 1.5rem;
+  min-width: 0;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .layout-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    box-shadow: none;
+  }
+
+  .layout-content {
+    padding: 1rem;
+  }
+}
+
+/* ── Campana de notificaciones ───────────────────────────── */
+.notif-bell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.9);
+  transition: all 0.2s ease;
+  position: relative;
+}
+.notif-bell:hover {
+  background: rgba(255,255,255,0.15);
+}
+.notif-bell.has-notif {
+  animation: bell-shake 2s ease infinite;
+}
+.notif-badge {
+  position: absolute;
+  top: 8px;
+  left: 26px;
+  background: #ff4757;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 50px;
+  padding: 1px 5px;
+  min-width: 18px;
+  text-align: center;
+  border: 2px solid rgba(102,126,234,0.3);
+}
+.notif-label {
+  font-size: 0.9rem;
+}
+@keyframes bell-shake {
+  0%,100% { transform: rotate(0deg); }
+  10%,30% { transform: rotate(-8deg); }
+  20%,40% { transform: rotate(8deg); }
+  50% { transform: rotate(0deg); }
+}

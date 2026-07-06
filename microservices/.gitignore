@@ -1,0 +1,27 @@
+# Variables de entorno — NUNCA subir al repositorio
+.env
+.env.local
+.env.production
+
+# Dependencias
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Logs de auditoría
+logs/
+*.log
+
+# Cache de TypeScript
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.suo
+*.user

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Plataforma de Matemáticas</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--
+      Content Security Policy — Defensa contra XSS
+      Esta meta es el respaldo (fallback). El header real viene de vercel.json.
+      Qué hace cada directiva:
+        default-src 'self'   → Solo cargar recursos del mismo dominio por defecto
+        script-src 'self'    → Solo scripts propios (no CDN externo sin hash)
+        style-src            → Estilos propios + CDN de Font Awesome
+        font-src             → Fuentes propias + CDN de Font Awesome
+        connect-src          → Solo llamadas a Supabase (bloquea cualquier otro fetch)
+        frame-ancestors none → Previene Clickjacking (nadie puede embeber esta app en un iframe)
+        object-src none      → Bloquea Flash, Java Applets, etc.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline';
+        style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
+        font-src 'self' https://cdnjs.cloudflare.com;
+        img-src 'self' data: https:;
+        connect-src 'self' https://xtbzwxwrlvtsdbppdgxe.supabase.co wss://xtbzwxwrlvtsdbppdgxe.supabase.co;
+        frame-ancestors 'none';
+        object-src 'none'
+      "
+    />
+
+    <base href="/">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  </head>
+  <body>
+    <app-root>Cargando...</app-root>
+  </body>
+</html>

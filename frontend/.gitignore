@@ -1,0 +1,16 @@
+# Dependencias (se instalan con npm install, no se suben)
+node_modules/
+
+# Build compilado (Vercel lo genera automáticamente)
+dist/
+.angular/
+
+# Variables de entorno (nunca subir)
+.env
+.env.local
+.env.production
+
+# Cache y temporales
+*.log
+.DS_Store
+Thumbs.db

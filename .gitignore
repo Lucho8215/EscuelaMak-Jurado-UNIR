@@ -1,0 +1,25 @@
+# Dependencias (nunca subir, pesan cientos de MB)
+node_modules/
+**/node_modules/
+
+# Builds compilados
+dist/
+**/dist/
+.angular/
+
+# Variables de entorno con credenciales (NUNCA subir)
+.env
+**/.env
+*.env.local
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/settings.json

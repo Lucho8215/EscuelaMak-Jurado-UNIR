@@ -1,0 +1,980 @@
+/* ════════════════════════════════════
+   CONTENEDOR PRINCIPAL
+════════════════════════════════════ */
+.student-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+}
+
+/* ════════════════════════════════════
+   ENCABEZADO
+════════════════════════════════════ */
+.student-header { margin-bottom: 2rem; }
+
+.btn-back {
+  color: rgba(255,255,255,0.8);
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: inline-block;
+  margin-bottom: 1rem;
+  transition: color 0.2s;
+}
+.btn-back:hover { color: white; }
+
+.student-header h1 {
+  color: white;
+  font-size: 2rem;
+  margin: 0 0 0.5rem;
+}
+.student-header p {
+  color: rgba(255,255,255,0.8);
+  margin: 0;
+}
+
+/* ════════════════════════════════════
+   ESTADOS: cargando y vacío
+════════════════════════════════════ */
+.estado-card {
+  background: rgba(255,255,255,0.15);
+  border-radius: 16px;
+  padding: 3rem;
+  text-align: center;
+  color: white;
+}
+.estado-emoji { font-size: 4rem; margin-bottom: 1rem; }
+.estado-card h3 { font-size: 1.5rem; margin: 0 0 0.5rem; }
+.estado-card p { opacity: 0.8; margin: 0; }
+
+/* ════════════════════════════════════
+   GRID DE TARJETAS DE CURSO
+════════════════════════════════════ */
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.course-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+/* Imagen/emoji de portada del curso */
+.course-image { height: 160px; overflow: hidden; }
+.course-image img { width: 100%; height: 100%; object-fit: cover; }
+.course-emoji {
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  display: flex; align-items: center;
+  justify-content: center; font-size: 4rem;
+}
+
+.course-info { padding: 1.5rem; }
+.course-category {
+  font-size: 0.75rem; font-weight: 700;
+  color: #764ba2; letter-spacing: 1px;
+  display: block; margin-bottom: 0.5rem;
+}
+.course-title {
+  font-size: 1.2rem; font-weight: 700;
+  color: #333; margin: 0 0 0.5rem;
+}
+.course-desc {
+  color: #666; font-size: 0.9rem;
+  margin: 0 0 1rem; line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.course-meta { color: #888; font-size: 0.85rem; margin-bottom: 1rem; }
+
+.btn-ver {
+  width: 100%; padding: 0.75rem;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white; border: none;
+  border-radius: 8px; font-weight: 600;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.btn-ver:hover { opacity: 0.9; }
+
+/* ════════════════════════════════════
+   MODAL PRINCIPAL (lista de clases)
+════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.65);
+  display: flex; align-items: center;
+  justify-content: center;
+  z-index: 1000; padding: 1rem;
+}
+.modal-box {
+  background: white;
+  border-radius: 20px;
+  width: 100%; max-width: 750px;
+  max-height: 90vh; overflow-y: auto;
+  padding: 2rem;
+}
+
+/* Encabezado del modal */
+.modal-header {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; margin-bottom: 1.5rem; gap: 1rem;
+}
+.modal-header h2 { font-size: 1.5rem; color: #333; margin: 0.25rem 0; }
+.modal-header p { color: #666; margin: 0; }
+
+.btn-close {
+  background: #f0f0f0; border: none;
+  border-radius: 50%; width: 36px; height: 36px;
+  cursor: pointer; font-size: 1rem; flex-shrink: 0;
+}
+.btn-close:hover { background: #e0e0e0; }
+
+.loading-small { text-align: center; color: #666; padding: 2rem; }
+.sin-clases {
+  text-align: center; color: #666;
+  padding: 2rem; background: #f9f9f9; border-radius: 12px;
+}
+
+/* ════════════════════════════════════
+   LISTA DE CLASES
+════════════════════════════════════ */
+.clases-titulo { color: #333; margin-bottom: 1rem; font-size: 1.1rem; }
+
+.class-card {
+  border: 2px solid #eee; border-radius: 12px;
+  padding: 1rem; margin-bottom: 0.75rem;
+  cursor: pointer; transition: all 0.2s;
+}
+.class-card:hover { border-color: #764ba2; background: #faf5ff; }
+/* Clase abierta: borde verde izquierdo */
+.class-activa { border-left: 4px solid #40c057; }
+/* Clase seleccionada: fondo lila suave */
+.class-seleccionada { background: #f3eeff; border-color: #764ba2; }
+
+/* ── Clase COMPLETADA ─────────────────────────────────────────────── */
+.class-card.class-completada {
+  border: 2px solid #10b981 !important;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 60%, #a7f3d0 100%) !important;
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.28), 0 0 0 3px rgba(16, 185, 129, 0.14);
+  transform: translateY(-1px);
+}
+.class-card.class-completada:hover {
+  border-color: #059669 !important;
+  box-shadow: 0 6px 22px rgba(16, 185, 129, 0.38), 0 0 0 4px rgba(16, 185, 129, 0.2);
+  transform: translateY(-2px);
+}
+.class-card.class-completada h4 {
+  color: #065f46;
+  font-weight: 700;
+}
+
+.class-estado-row {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+}
+
+.badge-completada {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+  animation: pop-in 0.3s ease;
+}
+
+@keyframes pop-in {
+  0%   { transform: scale(0.7); opacity: 0; }
+  80%  { transform: scale(1.1); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.class-numero.completado {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.5);
+}
+
+.class-header {
+  display: flex; align-items: center;
+  gap: 0.75rem; flex-wrap: wrap;
+}
+
+/* Círculo con el número de la clase */
+.class-numero {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white; border-radius: 50%;
+  display: flex; align-items: center;
+  justify-content: center; font-weight: 700; flex-shrink: 0;
+}
+
+.class-datos { flex: 1; }
+.class-datos h4 { margin: 0; color: #333; font-size: 1rem; }
+.class-estado { font-size: 0.8rem; color: #666; }
+.class-estado.abierta { color: #40c057; }
+
+/* Chips que muestran qué tiene la clase */
+.class-chips { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.chip {
+  padding: 0.2rem 0.5rem; border-radius: 6px;
+  font-size: 0.72rem; font-weight: 700;
+}
+.chip.video { background: #fee2e2; color: #dc2626; }
+.chip.pdf   { background: #dbeafe; color: #2563eb; }
+.chip.imagen { background: #dcfce7; color: #16a34a; }
+.chip.enlace { background: #fef9c3; color: #d97706; }
+
+.class-nota {
+  color: #555; font-size: 0.88rem;
+  margin: 0.6rem 0 0; padding: 0.5rem;
+  background: #fffbf0; border-radius: 8px;
+  border-left: 3px solid #fab005;
+}
+
+/* ════════════════════════════════════
+   DETALLE INTERACTIVO DE LA CLASE
+════════════════════════════════════ */
+.detalle-interactivo {
+  background: #f8f5ff;
+  border: 2px solid #764ba2;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.detalle-top {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 1rem;
+}
+.detalle-top h3 { margin: 0; color: #333; font-size: 1.1rem; }
+.btn-close-small {
+  background: #eee; border: none;
+  border-radius: 50%; width: 28px; height: 28px;
+  cursor: pointer;
+}
+.btn-close-small:hover { background: #ddd; }
+
+/* ─── PESTAÑAS ───────────────────── */
+.tabs {
+  display: flex; gap: 0.5rem;
+  flex-wrap: wrap; margin-bottom: 1.25rem;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0.75rem;
+}
+.tab {
+  padding: 0.4rem 0.9rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white; cursor: pointer;
+  font-size: 0.85rem; font-weight: 600;
+  color: #666; transition: all 0.2s;
+}
+.tab:hover { border-color: #764ba2; color: #764ba2; }
+/* Pestaña activa: fondo morado */
+.tab.activo {
+  background: #764ba2;
+  border-color: #764ba2;
+  color: white;
+}
+
+/* ─── CONTENIDO DE PESTAÑA ──────── */
+.tab-content { animation: fadeIn 0.2s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* PESTAÑA INFO */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem; margin-bottom: 1rem;
+}
+.info-item {
+  display: flex; flex-direction: column;
+  gap: 0.2rem; background: white;
+  padding: 0.75rem; border-radius: 10px;
+}
+.info-label { font-size: 0.78rem; color: #888; font-weight: 600; }
+.verde { color: #16a34a; font-weight: 600; }
+
+.observacion-box {
+  background: #fffbf0;
+  border-left: 4px solid #fab005;
+  padding: 0.75rem 1rem;
+  border-radius: 0 10px 10px 0;
+  margin-top: 0.75rem;
+}
+.observacion-box p { margin: 0.4rem 0 0; color: #555; }
+
+.recurso-descarga { margin-top: 1rem; }
+.btn-descargar {
+  display: inline-block; padding: 0.6rem 1.2rem;
+  background: #22c55e; color: white;
+  border-radius: 8px; text-decoration: none;
+  font-weight: 600; transition: opacity 0.2s;
+  margin-top: 0.75rem;
+}
+.btn-descargar:hover { opacity: 0.85; }
+
+/* Pestaña multimedia: video y PDF embebidos en el mismo modal */
+.multimedia-tab { display: flex; flex-direction: column; gap: 1.5rem; }
+.media-block {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+}
+.media-label {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: #333;
+}
+.media-hint { color: #888; font-size: 0.82rem; margin: 0.5rem 0 0; }
+
+/* Video: ratio 16:9 responsivo (YouTube, Vimeo, MP4) */
+.video-wrapper {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000;
+}
+.video-wrapper iframe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+.video-wrapper .video-native {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+}
+
+/* PDF: visor embebido directo, sin redirigir a URL externa */
+.pdf-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+.pdf-wrapper iframe {
+  width: 100%;
+  height: 520px;
+  display: block;
+}
+
+/* PESTAÑA IMAGEN */
+.imagen-wrapper {
+  text-align: center;
+  background: #f0f0f0;
+  border-radius: 12px;
+  padding: 1rem; overflow: hidden;
+}
+.imagen-wrapper img {
+  max-width: 100%; border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* PESTAÑA RECURSO EXTERNO */
+.recurso-box {
+  text-align: center;
+  padding: 2rem; background: white;
+  border-radius: 12px;
+}
+.recurso-icono { font-size: 3rem; margin-bottom: 0.75rem; }
+.recurso-box p { color: #555; margin-bottom: 1rem; }
+.btn-recurso-grande {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white; border-radius: 10px;
+  text-decoration: none; font-weight: 700;
+  transition: opacity 0.2s;
+}
+.btn-recurso-grande:hover { opacity: 0.85; }
+
+/* ════════════════════════════════════
+   BOTÓN CERRAR MODAL
+════════════════════════════════════ */
+.btn-cerrar {
+  width: 100%; padding: 0.75rem;
+  background: #f0f0f0; border: none;
+  border-radius: 8px; font-weight: 600;
+  cursor: pointer; margin-top: 1.5rem;
+  color: #333; transition: background 0.2s;
+}
+.btn-cerrar:hover { background: #e0e0e0; }
+
+/* ════════════════════════════════════
+   RESPONSIVE - CELULAR
+════════════════════════════════════ */
+@media (max-width: 768px) {
+  .student-container { padding: 1rem; }
+  .courses-grid { grid-template-columns: 1fr; }
+  .info-grid { grid-template-columns: 1fr; }
+  .modal-box { padding: 1.25rem; }
+  .tabs { gap: 0.35rem; }
+  .pdf-wrapper iframe { height: 320px; }
+  .modal-wide { max-width: 95vw; }
+}/* ═══════════════════════════════════
+   LECCIONES
+═══════════════════════════════════ */
+.lecciones-section { margin-top: 1.5rem; }
+.lecciones-titulo {
+  color: #333; font-size: 1.05rem;
+  margin: 0 0 0.75rem; font-weight: 700;
+}
+.leccion-card {
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 0.6rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  overflow: hidden;
+  background: white;
+}
+.leccion-card:hover { border-color: #764ba2; }
+.leccion-seleccionada { border-color: #764ba2; background: #faf5ff; }
+.leccion-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 1rem;
+}
+.leccion-numero {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  color: white; border-radius: 50%;
+  display: flex; align-items: center;
+  justify-content: center;
+  font-weight: 700; font-size: 0.85rem;
+  flex-shrink: 0;
+}
+.leccion-datos { flex: 1; }
+.leccion-datos h5 { margin: 0; color: #333; font-size: 0.95rem; }
+.leccion-chips { display: flex; gap: 0.3rem; margin-top: 0.3rem; flex-wrap: wrap; }
+.leccion-expand { color: #764ba2; font-size: 0.9rem; flex-shrink: 0; }
+.leccion-contenido {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid #f0eeff;
+  cursor: default;
+}
+.leccion-obs {
+  background: #fffbf0;
+  border-left: 3px solid #fab005;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0 8px 8px 0;
+  color: #555; font-size: 0.9rem;
+  margin: 0;
+}
+/* Modal mas ancho para lecciones con video */
+.modal-wide { max-width: 900px; }
+
+/* ========================
+   BOTÓN DE LECTURA EN VOZ ALTA (TTS)
+======================== */
+.btn-leer {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px -1px rgba(99, 102, 241, 0.3);
+  margin-top: 0.75rem;
+}
+
+.btn-leer:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px -2px rgba(99, 102, 241, 0.4);
+}
+
+.btn-leer:active {
+  transform: translateY(0);
+}
+
+.btn-leer.leyendo {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  animation: pulse-leer 1.5s infinite;
+}
+
+@keyframes pulse-leer {
+  0%, 100% {
+    box-shadow: 0 2px 4px -1px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 8px -2px rgba(239, 68, 68, 0.5);
+  }
+}
+
+/* Botón pequeño para clases */
+.btn-leer-sm {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  padding: 0.35rem 0.6rem;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px -1px rgba(99, 102, 241, 0.3);
+  margin-left: auto;
+}
+
+.btn-leer-sm:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px -2px rgba(99, 102, 241, 0.4);
+}
+/* ─── PROGRESO DE LECCIONES ─────────────────────────────── */
+.curso-progreso-global {
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8f5e9 100%);
+  border: 1px solid #c5cae9;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+}
+.progreso-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 0.4rem;
+}
+.progreso-label strong { color: #3949ab; font-size: 1rem; }
+.progreso-bar-outer {
+  background: #dde2ff;
+  border-radius: 8px;
+  height: 10px;
+  overflow: hidden;
+}
+.progreso-bar-inner {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #43e97b);
+  border-radius: 8px;
+  transition: width 0.5s ease;
+}
+.progreso-completadas {
+  font-size: 0.75rem;
+  color: #888;
+  display: block;
+  margin-top: 0.3rem;
+}
+
+/* Mini barra por lección */
+.leccion-progreso-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+.mini-bar-outer {
+  flex: 1;
+  background: #e8eaf6;
+  border-radius: 6px;
+  height: 5px;
+  overflow: hidden;
+}
+.mini-bar-inner {
+  height: 100%;
+  background: #667eea;
+  border-radius: 6px;
+  transition: width 0.4s ease;
+}
+.mini-bar-inner.completo { background: #43e97b; }
+.mini-pct { font-size: 0.7rem; color: #888; min-width: 28px; text-align: right; }
+
+/* Lección completada */
+.leccion-card.leccion-completada {
+  border: 2px solid #10b981;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25), 0 0 0 3px rgba(16, 185, 129, 0.12);
+  transform: translateY(-1px);
+}
+.leccion-card.leccion-completada:hover {
+  border-color: #059669;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35), 0 0 0 4px rgba(16, 185, 129, 0.18);
+  transform: translateY(-2px);
+}
+.leccion-card.leccion-completada .leccion-numero {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.45);
+}
+.leccion-card.leccion-completada h5 {
+  color: #065f46;
+  font-weight: 700;
+}
+.leccion-card.leccion-completada .leccion-expand {
+  color: #10b981;
+}
+.leccion-numero.completado {
+  background: #43e97b !important;
+  color: #fff;
+  font-weight: bold;
+}
+
+/* Chips con estado visto */
+.chip.chip-visto {
+  background: #c8f7c5 !important;
+  color: #2e7d32 !important;
+  border: 1px solid #a5d6a7;
+}
+
+/* Badge "visto" en tabs */
+.tab-check {
+  display: inline-block;
+  background: #43e97b;
+  color: #fff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 0.65rem;
+  line-height: 16px;
+  text-align: center;
+  margin-left: 4px;
+  font-weight: bold;
+}
+
+/* Banner "recurso visto" dentro de cada pestaña */
+.recurso-visto-badge {
+  background: #e8f5e9;
+  border: 1px solid #a5d6a7;
+  color: #2e7d32;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+  display: inline-block;
+}
+
+/* ─── CHECKLIST DE RECURSOS ────────────────────────────────── */
+.lesson-checklist {
+  background: #f8faff;
+  border: 1.5px solid #c7d2fe;
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 1rem;
+}
+.checklist-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #3730a3;
+  margin-bottom: 0.7rem;
+}
+.checklist-pct {
+  background: #e0e7ff;
+  color: #4338ca;
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition: background 0.3s;
+}
+.checklist-pct.pct-completo {
+  background: #d1fae5;
+  color: #065f46;
+}
+.checklist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.9rem;
+}
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: #64748b;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
+}
+.check-item:hover { background: #f1f5ff; border-color: #a5b4fc; }
+.check-item.checked {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #166534;
+  font-weight: 600;
+}
+.check-box { font-size: 1.1rem; width: 1.4rem; text-align: center; }
+
+.checklist-footer { margin-top: 0.2rem; }
+
+.leccion-completar-box {
+  margin: 1rem 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.estado-completado {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  font-weight: 700;
+  font-size: 1rem;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  text-align: center;
+  border: 1.5px solid #6ee7b7;
+}
+
+.btn-completar-leccion {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #43e97b 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+}
+.btn-completar-leccion:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+.btn-completar-leccion:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.checklist-hint {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  text-align: center;
+  margin: 0.3rem 0 0;
+  font-style: italic;
+}
+
+/* ── Chat button trigger ──────────────────────────── */
+.chat-trigger-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 1.5rem 0;
+}
+
+.btn-chat-open {
+  background: linear-gradient(135deg, var(--color-primary, #667eea), var(--color-secondary, #764ba2));
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 14px rgba(102,126,234,0.35);
+  transition: all 0.2s ease;
+}
+.btn-chat-open:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102,126,234,0.45);
+}
+
+/* ── Chat panel ────────────────────────────────────── */
+.chat-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.chat-panel {
+  position: fixed;
+  right: -420px;
+  top: 0;
+  width: 400px;
+  height: 100vh;
+  background: #fff;
+  box-shadow: -8px 0 40px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  z-index: 1001;
+  transition: right 0.35s cubic-bezier(0.4,0,0.2,1);
+  border-radius: 20px 0 0 20px;
+}
+.chat-panel.chat-open {
+  right: 0;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, var(--color-primary, #667eea), var(--color-secondary, #764ba2));
+  color: white;
+  border-radius: 20px 0 0 0;
+}
+.chat-header-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.chat-close-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: #f8f9ff;
+}
+
+.chat-loading, .chat-empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 2rem;
+}
+
+.chat-bubble {
+  max-width: 80%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.chat-mine {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+.chat-theirs {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+.chat-bubble-meta {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+.chat-sender { font-weight: 600; }
+
+.chat-bubble-text {
+  padding: 0.65rem 0.9rem;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.chat-mine .chat-bubble-text {
+  background: linear-gradient(135deg, var(--color-primary, #667eea), var(--color-secondary, #764ba2));
+  color: white;
+  border-radius: 14px 14px 4px 14px;
+}
+.chat-theirs .chat-bubble-text {
+  background: white;
+  color: #1a1a2e;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px 14px 14px 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+/* Mensajes del tutor/admin — verde estilo WhatsApp */
+.chat-tutor .chat-bubble-text {
+  background: #dcf8c6;
+  color: #1a1a1a;
+  border: 1px solid #b7e49a;
+  border-radius: 14px 14px 14px 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.chat-tutor .chat-bubble-meta {
+  color: #25a244;
+}
+.chat-tutor .chat-sender {
+  color: #128c3e;
+  font-weight: 700;
+}
+
+.chat-input-area {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-top: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 0 0 0 20px;
+}
+.chat-input {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.chat-input:focus {
+  border-color: var(--color-primary, #667eea);
+}
+.chat-send-btn {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, var(--color-primary, #667eea), var(--color-secondary, #764ba2));
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.chat-send-btn:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+.chat-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

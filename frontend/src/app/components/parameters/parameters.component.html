@@ -1,0 +1,1400 @@
+﻿<div class="page-shell">
+  <!-- Encabezado principal del módulo -->
+  <section class="page-header">
+    <div>
+      <h1 class="page-title">
+        <i class="fas fa-sliders-h"></i>
+        Parámetros
+      </h1>
+      <p class="page-subtitle">
+        Administra usuarios, clases, temas de color y permisos del sistema.
+      </p>
+    </div>
+  </section>
+
+  <!-- Tabs internas del módulo -->
+  <div class="section-tabs">
+    <button class="nav-item" [class.active]="activeSection==='users'" (click)="setSection('users')">
+      <i class="fas fa-users"></i>
+      <span>Usuarios</span>
+      <span class="nav-badge">{{ getTotalUsers() }}</span>
+    </button>
+
+    <button class="nav-item" [class.active]="activeSection==='classes'" (click)="setSection('classes')">
+      <i class="fas fa-chalkboard"></i>
+      <span>Clases</span>
+      <span class="nav-badge">{{ getTotalClasses() }}</span>
+    </button>
+
+    <button class="nav-item" [class.active]="activeSection==='school'" (click)="setSection('school')">
+      <i class="fas fa-school"></i>
+      <span>Escuela</span>
+    </button>
+
+    <button class="nav-item" [class.active]="activeSection==='metrics'" (click)="setSection('metrics')">
+      <i class="fas fa-chart-line"></i>
+      <span>Métricas</span>
+      <span class="nav-badge">{{ platformMetrics.length }}</span>
+    </button>
+
+    <button class="nav-item" [class.active]="activeSection==='theme'" (click)="setSection('theme')">
+      <i class="fas fa-palette"></i>
+      <span>Temas</span>
+    </button>
+
+    <button class="nav-item" [class.active]="activeSection==='permissions'" (click)="setSection('permissions')">
+      <i class="fas fa-shield-alt"></i>
+      <span>Permisos</span>
+      <span class="nav-badge">{{ getEnabledCount() }}</span>
+    </button>
+
+    <button class="nav-item" [class.active]="activeSection==='enrollments'" (click)="setSection('enrollments')">
+      <i class="fas fa-graduation-cap"></i>
+      <span>Cursos Asignados</span>
+      <span class="nav-badge">{{ students.length }}</span>
+    </button>
+  </div>
+
+  <!-- Alertas -->
+  <div *ngIf="successMsg" class="toast toast-success">
+    <i class="fas fa-check-circle"></i>
+    {{ successMsg }}
+  </div>
+
+  <div *ngIf="errorMsg" class="toast toast-error">
+    <i class="fas fa-times-circle"></i>
+    {{ errorMsg }}
+  </div>
+
+  <!-- Loader -->
+  <div *ngIf="loading" class="global-loader">
+    <div class="loader-spinner"></div>
+  </div>
+
+  <div class="params-body">
+    <!-- USUARIOS -->
+    <section *ngIf="activeSection==='users'" class="content-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title"><i class="fas fa-users"></i> Gestión de Usuarios</h2>
+          <p class="section-sub">Crea, edita y administra todos los usuarios del sistema</p>
+        </div>
+        <button class="btn-primary" (click)="openCreateUser()">
+          <i class="fas fa-user-plus"></i>
+          Nuevo Usuario
+        </button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card stat-admin">
+          <div class="stat-icon"><i class="fas fa-crown"></i></div>
+          <div>
+            <div class="stat-num">{{ getUserCountByRole('admin') }}</div>
+            <div class="stat-lbl">Admins</div>
+          </div>
+        </div>
+
+        <div class="stat-card stat-teacher">
+          <div class="stat-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+          <div>
+            <div class="stat-num">{{ getUserCountByRole('teacher') }}</div>
+            <div class="stat-lbl">Profesores</div>
+          </div>
+        </div>
+
+        <div class="stat-card stat-tutor">
+          <div class="stat-icon"><i class="fas fa-user-tie"></i></div>
+          <div>
+            <div class="stat-num">{{ getUserCountByRole('tutor') }}</div>
+            <div class="stat-lbl">Tutores</div>
+          </div>
+        </div>
+
+        <div class="stat-card stat-student">
+          <div class="stat-icon"><i class="fas fa-user-graduate"></i></div>
+          <div>
+            <div class="stat-num">{{ getUserCountByRole('student') }}</div>
+            <div class="stat-lbl">Estudiantes</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <i class="fas fa-search"></i>
+          <input
+            class="search-input"
+            [(ngModel)]="searchUser"
+            (ngModelChange)="applyUserFilters()"
+            placeholder="Buscar usuario..."
+          />
+        </div>
+
+        <select class="filter-select" [(ngModel)]="filterRole" (ngModelChange)="applyUserFilters()">
+          <option value="">Filtrar por rol</option>
+          <option *ngFor="let r of customRoles" [value]="r.code">{{ r.name }}</option>
+        </select>
+
+        <span class="results-count">{{ filteredUsers.length }} usuarios</span>
+      </div>
+
+      <div class="table-card">
+        <div *ngIf="filteredUsers.length===0" class="empty-state">
+          <i class="fas fa-user-slash"></i>
+          <p>No se encontraron usuarios</p>
+          <button class="btn-primary" (click)="openCreateUser()">Crear primer usuario</button>
+        </div>
+
+        <table *ngIf="filteredUsers.length>0" class="data-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Registro</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let user of filteredUsers" class="table-row">
+              <td>
+                <div class="user-cell">
+                  <div class="avatar" [style.background]="'var(--color-primary, #667eea)'">
+                    {{ user.name.charAt(0).toUpperCase() }}
+                  </div>
+                  <span class="user-name">{{ user.name }}</span>
+                </div>
+              </td>
+
+              <td><span class="email-text">{{ user.email }}</span></td>
+
+              <td>
+                <span class="role-badge" [ngClass]="getRoleBadgeClass(user.role)">
+                  <i [class]="getRoleIcon(user.role)"></i>
+                  {{ user.role | titlecase }}
+                </span>
+              </td>
+
+              <td>
+                <span class="date-text">{{ user.created_at | date:'dd/MM/yyyy' }}</span>
+              </td>
+
+              <td>
+                <div class="action-btns">
+                  <button class="btn-icon btn-edit" (click)="openEditUser(user)">
+                    <i class="fas fa-edit"></i>
+                    Editar
+                  </button>
+
+                  <button class="btn-icon btn-delete" (click)="confirmDelete('user', user.id, user.name)">
+                    <i class="fas fa-trash"></i>
+                    Eliminar
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CLASES -->
+    <section *ngIf="activeSection==='classes'" class="content-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title"><i class="fas fa-chalkboard"></i> Gestión de Clases</h2>
+          <p class="section-sub">Administra las clases del sistema</p>
+        </div>
+
+        <button class="btn-primary" (click)="openCreateClass()">
+          <i class="fas fa-plus"></i>
+          Nueva Clase
+        </button>
+      </div>
+
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <i class="fas fa-search"></i>
+          <input
+            class="search-input"
+            [(ngModel)]="searchClass"
+            (ngModelChange)="applyClassFilters()"
+            placeholder="Buscar clase..."
+          />
+        </div>
+
+        <span class="results-count">{{ filteredClasses.length }} clases</span>
+      </div>
+
+      <div *ngIf="filteredClasses.length===0" class="empty-state">
+        <i class="fas fa-chalkboard"></i>
+        <p>No hay clases creadas</p>
+        <button class="btn-primary" (click)="openCreateClass()">Crear primera clase</button>
+      </div>
+
+      <div class="classes-grid" *ngIf="filteredClasses.length>0">
+        <div *ngFor="let cls of filteredClasses" class="class-card">
+          <div class="class-card-header">
+            <div class="class-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+            <span
+              class="class-status-badge"
+              [class.open]="cls.status==='open'"
+              [class.closed]="cls.status==='closed'"
+            >
+              {{ getClassStatusLabel(cls.status) }}
+            </span>
+          </div>
+
+          <div class="class-card-body">
+            <h3 class="class-name">{{ cls.name || cls.title || 'Sin nombre' }}</h3>
+
+            <p class="class-course">
+              <i class="fas fa-book"></i>
+              {{ getCourseTitle(cls.course_id) }}
+            </p>
+
+            <div class="class-meta">
+              <span>
+                <i class="fas fa-users"></i>
+                {{ cls.enrollment_count || 0 }} / {{ cls.max_students || 30 }}
+              </span>
+
+              <span *ngIf="cls.start_date">
+                <i class="fas fa-calendar"></i>
+                {{ cls.start_date | date:'dd/MM/yyyy' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="class-card-actions">
+            <button class="btn-icon btn-edit" (click)="openEditClass(cls)">
+              <i class="fas fa-edit"></i>
+              Editar
+            </button>
+
+            <button
+              class="btn-icon btn-delete"
+              (click)="confirmDelete('class', cls.id, cls.name || cls.title || 'Sin nombre')"
+            >
+              <i class="fas fa-trash"></i>
+              Eliminar
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+<!-- ESCUELA -->
+    <section *ngIf="activeSection==='school'" class="content-section">
+
+      <!-- Encabezado -->
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">🏫 Configuración de la Escuela</h2>
+          <p class="section-sub">Personaliza el nombre, contacto y colores de tu institución educativa</p>
+        </div>
+        <button class="btn-primary" (click)="openSchoolModal()">
+          ✏️ {{ schoolConfig ? 'Editar Configuración' : 'Crear Configuración' }}
+        </button>
+      </div>
+
+      <!-- Sin configuración -->
+      <div *ngIf="!schoolConfig" class="empty-state">
+        <div style="font-size:4rem; margin-bottom:1rem;">🏫</div>
+        <p>No hay configuración de escuela todavía.</p>
+        <p style="font-size:0.88rem; color:#94a3b8; margin-bottom:1.5rem;">
+          Crea la configuración para personalizar la plataforma con el nombre y colores de tu institución.
+        </p>
+        <button class="btn-primary" (click)="openSchoolModal()">+ Crear Configuración</button>
+      </div>
+
+      <!-- Vista de configuración existente -->
+      <div *ngIf="schoolConfig" class="school-vista">
+
+        <!-- Tarjeta principal con gradiente -->
+        <div class="school-banner"
+             [style.background]="'linear-gradient(135deg,' + schoolConfig.primary_color + ',' + schoolConfig.secondary_color + ')'">
+          <!-- Logo o placeholder -->
+          <div class="school-logo-wrap">
+            <img *ngIf="schoolConfig.school_logo_url"
+                 [src]="schoolConfig.school_logo_url"
+                 alt="Logo" class="school-logo-img">
+            <div *ngIf="!schoolConfig.school_logo_url" class="school-logo-placeholder">
+              🏫
+            </div>
+          </div>
+          <!-- Nombre y descripción -->
+          <div class="school-banner-info">
+            <h2>{{ schoolConfig.school_name }}</h2>
+            <p>{{ schoolConfig.school_description || 'Sin descripción' }}</p>
+          </div>
+        </div>
+
+        <!-- Información de contacto -->
+        <div class="school-info-grid">
+          <div class="school-info-card">
+            <span class="school-info-label">📧 Correo</span>
+            <span class="school-info-value">{{ schoolConfig.school_email || 'No configurado' }}</span>
+          </div>
+          <div class="school-info-card">
+            <span class="school-info-label">📞 Teléfono</span>
+            <span class="school-info-value">{{ schoolConfig.school_phone || 'No configurado' }}</span>
+          </div>
+          <div class="school-info-card">
+            <span class="school-info-label">📍 Dirección</span>
+            <span class="school-info-value">{{ schoolConfig.school_address || 'No configurada' }}</span>
+          </div>
+          <div class="school-info-card">
+            <span class="school-info-label">🎨 Tema activo</span>
+            <span class="school-info-value">{{ schoolConfig.active_theme || 'Default' }}</span>
+          </div>
+          <div class="school-info-card">
+            <span class="school-info-label">🔤 Tipografía</span>
+            <span class="school-info-value">{{ getFontLabel(selectedFontId) }}</span>
+          </div>
+        </div>
+
+        <!-- Paleta de colores -->
+        <div class="school-colores-titulo">🎨 Paleta de Colores de la Plataforma</div>
+        <div class="school-colores-grid">
+          <div class="color-item">
+            <div class="color-circulo" [style.background]="schoolConfig.primary_color"></div>
+            <span class="color-nombre">Primario</span>
+            <span class="color-hex">{{ schoolConfig.primary_color }}</span>
+          </div>
+          <div class="color-item">
+            <div class="color-circulo" [style.background]="schoolConfig.secondary_color"></div>
+            <span class="color-nombre">Secundario</span>
+            <span class="color-hex">{{ schoolConfig.secondary_color }}</span>
+          </div>
+          <div class="color-item">
+            <div class="color-circulo" [style.background]="schoolConfig.accent_color"></div>
+            <span class="color-nombre">Acento</span>
+            <span class="color-hex">{{ schoolConfig.accent_color }}</span>
+          </div>
+          <div class="color-item">
+            <div class="color-circulo" [style.background]="schoolConfig.background_color"></div>
+            <span class="color-nombre">Fondo</span>
+            <span class="color-hex">{{ schoolConfig.background_color }}</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+   <!-- MÉTRICAS -->
+    <section *ngIf="activeSection==='metrics'" class="content-section">
+
+      <!-- Encabezado -->
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">📊 Métricas del Sistema</h2>
+          <p class="section-sub">
+            Las métricas son indicadores que muestran estadísticas clave de la plataforma.
+            Puedes crear, editar y controlar cuáles son visibles públicamente.
+          </p>
+        </div>
+        <button class="btn-primary" (click)="openMetricModal()">
+          + Nueva Métrica
+        </button>
+      </div>
+
+      <!-- Explicación de uso -->
+      <div class="metricas-ayuda">
+        <div class="ayuda-item">
+          <span class="ayuda-icono">👁️</span>
+          <span>Activa o desactiva cada métrica con el toggle</span>
+        </div>
+        <div class="ayuda-item">
+          <span class="ayuda-icono">✏️</span>
+          <span>Edita el nombre y valor de cada indicador</span>
+        </div>
+        <div class="ayuda-item">
+          <span class="ayuda-icono">🗑️</span>
+          <span>Elimina las métricas que ya no necesites</span>
+        </div>
+      </div>
+
+      <!-- Sin métricas -->
+      <div *ngIf="platformMetrics.length === 0" class="empty-state">
+        <div style="font-size:4rem; margin-bottom:1rem;">📊</div>
+        <p>No hay métricas configuradas aún.</p>
+        <p style="font-size:0.88rem; color:#94a3b8; margin-bottom:1.5rem;">
+          Crea métricas para mostrar estadísticas como total de estudiantes, cursos activos, promedio general, etc.
+        </p>
+        <button class="btn-primary" (click)="openMetricModal()">+ Crear primera métrica</button>
+      </div>
+
+      <!-- Grid de métricas -->
+      <div class="metrics-grid" *ngIf="platformMetrics.length > 0">
+        <div *ngFor="let metric of platformMetrics"
+             class="metric-card"
+             [class.metric-inactiva]="!metric.is_visible">
+
+          <!-- Header con icono y toggle -->
+          <div class="metric-header">
+            <div class="metric-icon">
+              <i [class]="getMetricIcon(metric.metric_type)"></i>
+            </div>
+            <div class="metric-header-info">
+              <span class="metric-tipo">{{ metric.metric_type | uppercase }}</span>
+              <span class="metric-orden">Orden: {{ metric.display_order }}</span>
+            </div>
+            <!-- Toggle visibilidad -->
+            <label class="toggle-switch" title="{{ metric.is_visible ? 'Visible' : 'Oculto' }}">
+              <input type="checkbox"
+                     [checked]="metric.is_visible"
+                     (change)="toggleMetricVisibility(metric)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Cuerpo con nombre y valor -->
+          <div class="metric-body">
+            <h4>{{ metric.metric_name }}</h4>
+            <div class="metric-value">{{ metric.metric_value }}</div>
+            <span class="metric-visible-badge"
+                  [class.visible]="metric.is_visible"
+                  [class.oculta]="!metric.is_visible">
+              {{ metric.is_visible ? '👁️ Visible' : '🔒 Oculta' }}
+            </span>
+          </div>
+
+          <!-- Acciones -->
+          <div class="metric-actions">
+            <button class="btn-icon btn-edit" (click)="openMetricModal(metric)">
+              ✏️ Editar
+            </button>
+            <button class="btn-icon btn-delete" (click)="deleteMetric(metric.id)">
+              🗑️ Eliminar
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- TEMAS -->
+    <section *ngIf="activeSection==='theme'" class="content-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title"><i class="fas fa-palette"></i> Temas de Color</h2>
+          <p class="section-sub">Personaliza los colores de toda la plataforma</p>
+        </div>
+      </div>
+
+      <div class="theme-grid">
+        <div
+          *ngFor="let theme of themes"
+          class="theme-card"
+          [class.selected]="selectedTheme===theme.id"
+          (click)="selectTheme(theme.id)"
+        >
+          <div class="theme-preview">
+            <div
+              *ngFor="let color of theme.preview"
+              class="preview-block"
+              [style.background]="color"
+            ></div>
+          </div>
+
+          <div class="theme-info">
+            <span class="theme-name">{{ theme.name }}</span>
+            <span *ngIf="selectedTheme===theme.id" class="theme-active">
+              <i class="fas fa-check-circle"></i>
+              Activo
+            </span>
+          </div>
+
+          <div class="theme-colors">
+            <span
+              *ngFor="let color of theme.preview"
+              class="color-dot"
+              [style.background]="color"
+            ></span>
+          </div>
+
+          <div class="theme-select-btn" [class.active]="selectedTheme===theme.id">
+            <i *ngIf="selectedTheme===theme.id" class="fas fa-check"></i>
+            <span>{{ selectedTheme===theme.id ? 'Tema actual' : 'Seleccionar tema' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="preview-section">
+        <h3 class="preview-title"><i class="fas fa-eye"></i> Previsualización</h3>
+
+        <div *ngIf="getTheme(selectedTheme) as t" class="preview-demo" [style.background]="t.bg">
+          <div class="demo-header" [style.background]="'linear-gradient(135deg,' + t.primary + ',' + t.secondary + ')'">
+            <span class="demo-logo"><i class="fas fa-rocket"></i> EscuelaMAK</span>
+            <div class="demo-nav">
+              <span>Cursos</span>
+              <span>Clases</span>
+              <span>Quiz</span>
+            </div>
+          </div>
+
+          <div class="demo-body">
+            <div class="demo-card" [style.border-left]="'4px solid ' + t.primary">
+              <i class="fas fa-book" [style.color]="t.primary"></i>
+              <span>Matemáticas Mágicas</span>
+            </div>
+
+            <div class="demo-card" [style.border-left]="'4px solid ' + t.accent">
+              <i class="fas fa-star" [style.color]="t.accent"></i>
+              <span>Ciencias Aventura</span>
+            </div>
+
+            <button class="demo-btn" [style.background]="'linear-gradient(135deg,' + t.primary + ',' + t.secondary + ')'">
+              Ver Curso
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PERMISOS -->
+    <section *ngIf="activeSection==='permissions'" class="content-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title"><i class="fas fa-shield-alt"></i> Permisos y Roles</h2>
+          <p class="section-sub">Administra qué pueden ver y hacer cada rol en la plataforma</p>
+        </div>
+      </div>
+
+      <!-- Pestañas de Permisos -->
+      <div class="permissions-tabs">
+        <button class="perm-tab" [class.active]="permissionsTab === 'modules'" (click)="permissionsTab = 'modules'">
+          <i class="fas fa-th-large"></i>
+          <span>Módulos</span>
+          <span class="tab-badge">{{ granularPermissions.length }}</span>
+        </button>
+        <button class="perm-tab" [class.active]="permissionsTab === 'roles'" (click)="permissionsTab = 'roles'">
+          <i class="fas fa-users-cog"></i>
+          <span>Roles</span>
+          <span class="tab-badge">{{ customRoles.length }}</span>
+        </button>
+      </div>
+
+      <!-- VISTA DE MÓDULOS -->
+      <div *ngIf="permissionsTab === 'modules'" class="modules-view">
+        <div class="modules-filters">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" [(ngModel)]="searchModule" placeholder="Buscar módulos..." class="search-input" />
+          </div>
+          <select [(ngModel)]="filterModuleCategory" class="filter-select">
+            <option value="all">Todas las categorías</option>
+            <option *ngFor="let cat of moduleCategories" [value]="cat">{{ cat }}</option>
+          </select>
+        </div>
+
+        <!-- Selector de Rol para ver/editar permisos -->
+        <div class="role-selector-panel">
+          <span class="selector-label">Editar permisos del rol:</span>
+          <div class="role-chips">
+            <div *ngFor="let role of customRoles"
+                 class="role-chip-large"
+                 [class.selected]="selectedRole?.id === role.id"
+                 [style.--role-color]="role.color"
+                 (click)="selectRole(role)">
+              <i [class]="role.icon"></i>
+              <span>{{ role.name }}</span>
+              <i *ngIf="selectedRole?.id === role.id" class="fas fa-check-circle check-icon"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista de Módulos con Permisos Granulares -->
+        <div class="modules-grid">
+          <div *ngFor="let module of filteredModules" class="module-card">
+            <div class="module-header" [style.background]="module.module_color + '15'">
+              <div class="module-icon" [style.background]="module.module_color + '25'" [style.color]="module.module_color">
+                <i [class]="module.module_icon"></i>
+              </div>
+              <div class="module-info">
+                <span class="module-category">{{ module.category }}</span>
+                <h3 class="module-name">{{ module.module_name }}</h3>
+                <p class="module-desc">{{ module.description }}</p>
+              </div>
+            </div>
+
+            <!-- Permisos Granulares por Rol -->
+            <div class="module-permissions" *ngIf="selectedRole">
+              <div class="perm-row">
+                <div class="perm-role-header">
+                  <i [class]="selectedRole.icon" [style.color]="selectedRole.color"></i>
+                  <span>{{ selectedRole.name }}</span>
+                </div>
+                <div class="perm-actions">
+                  <!-- Permiso de Vista -->
+                  <label class="perm-toggle" [class.active]="canRoleView(selectedRole.code, module.module_key)" title="Ver">
+                    <input type="checkbox" [checked]="canRoleView(selectedRole.code, module.module_key)" 
+                           (change)="toggleViewPermission(selectedRole, module.module_key)" hidden />
+                    <span class="toggle-btn view">
+                      <i class="fas fa-eye"></i>
+                    </span>
+                  </label>
+                  <!-- Permiso de Crear -->
+                  <label class="perm-toggle" [class.active]="canRoleCreate(selectedRole.code, module.module_key)" title="Crear">
+                    <input type="checkbox" [checked]="canRoleCreate(selectedRole.code, module.module_key)" 
+                           (change)="toggleCreatePermission(selectedRole, module.module_key)" hidden />
+                    <span class="toggle-btn create">
+                      <i class="fas fa-plus-circle"></i>
+                    </span>
+                  </label>
+                  <!-- Permiso de Editar -->
+                  <label class="perm-toggle" [class.active]="canRoleEdit(selectedRole.code, module.module_key)" title="Editar">
+                    <input type="checkbox" [checked]="canRoleEdit(selectedRole.code, module.module_key)" 
+                           (change)="toggleEditPermission(selectedRole, module.module_key)" hidden />
+                    <span class="toggle-btn edit">
+                      <i class="fas fa-edit"></i>
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!--Leyenda cuando no hay rol seleccionado -->
+            <div class="module-permissions no-role" *ngIf="!selectedRole">
+              <i class="fas fa-hand-point-up"></i>
+              <span>Selecciona un rol arriba para editar sus permisos</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen de permisos por rol -->
+        <div class="permissions-summary">
+          <h3 class="summary-title"><i class="fas fa-chart-pie"></i> Resumen de Permisos</h3>
+          <div class="summary-grid">
+            <div *ngFor="let role of customRoles" class="summary-card" [style.border-color]="role.color">
+              <div class="summary-header" [style.background]="role.color + '15'">
+                <i [class]="role.icon" [style.color]="role.color"></i>
+                <span>{{ role.name }}</span>
+              </div>
+              <div class="summary-stats">
+                <div class="stat">
+                  <span class="stat-num">{{ countViewPermissions(role) }}</span>
+                  <span class="stat-label">Puede ver</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-num">{{ countCreatePermissions(role) }}</span>
+                  <span class="stat-label">Puede crear</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-num">{{ countEditPermissions(role) }}</span>
+                  <span class="stat-label">Puede editar</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISTA DE ROLES -->
+      <div *ngIf="permissionsTab === 'roles'" class="roles-view">
+        <div class="roles-header">
+          <p class="roles-description">
+            <i class="fas fa-info-circle"></i>
+            Los roles definen qué puede hacer cada tipo de usuario. Los roles marcados como «Sistema» no pueden eliminarse.
+          </p>
+          <button class="btn-primary" (click)="openCreateRole()">
+            <i class="fas fa-plus"></i>
+            Nuevo Rol
+          </button>
+        </div>
+
+        <div class="roles-list">
+          <div *ngFor="let role of customRoles" class="role-card">
+            <div class="role-card-header">
+              <div class="role-avatar" [style.background]="role.color + '20'" [style.color]="role.color">
+                <i [class]="role.icon"></i>
+              </div>
+              <div class="role-details">
+                <h3 class="role-name">
+                  {{ role.name }}
+                  <span *ngIf="role.is_default" class="system-badge">Sistema</span>
+                </h3>
+                <p class="role-description">{{ role.description }}</p>
+                <div class="role-meta">
+                  <span class="meta-item">
+                    <i class="fas fa-shield-alt"></i>
+                    {{ getRolePermissionsCount(role) }} permisos activos
+                  </span>
+                </div>
+              </div>
+              <div class="role-actions">
+                <button class="btn-icon" title="Editar rol" (click)="openEditRole(role)">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button *ngIf="!role.is_default" class="btn-icon danger" title="Eliminar rol" (click)="deleteRole(role.id)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Barra de permisos rápida -->
+            <div class="role-permissions-bar">
+              <span class="bar-label">Accesos:</span>
+              <div class="bar-permissions">
+                <span *ngFor="let perm of (role.permissions ? role.permissions.length : 0) > 0 ? role.permissions.slice(0,8) : []" 
+                      class="perm-badge"
+                      [class.can-view]="perm.can_view"
+                      [class.can-create]="perm.can_create"
+                      [class.can-edit]="perm.can_edit">
+                  {{ getModuleName(perm.module_key) }}
+                </span>
+                <span *ngIf="(role.permissions?.length || 0) > 8" class="perm-more">
+                  +{{ (role.permissions?.length || 0) - 8 }} más
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="roles-footer">
+          <button class="btn-secondary" (click)="resetRoles()">
+            <i class="fas fa-undo"></i>
+            Restablecer Roles
+          </button>
+        </div>
+      </div>
+    </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       SECCIÓN: CURSOS ASIGNADOS
+  ════════════════════════════════════════════════════════════════ -->
+  <section *ngIf="activeSection==='enrollments'" class="content-section enrollment-section">
+
+    <div class="section-header-row">
+      <div>
+        <h2 class="section-title"><i class="fas fa-graduation-cap"></i> Cursos Asignados</h2>
+        <p class="section-desc">Selecciona un alumno para ver y gestionar sus cursos asignados.</p>
+      </div>
+    </div>
+
+    <div class="search-bar-wrap">
+      <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Buscar alumno…"
+               [(ngModel)]="searchStudent" (ngModelChange)="applyStudentFilter()" />
+      </div>
+      <span class="result-count">{{ filteredStudents.length }} alumno{{ filteredStudents.length !== 1 ? 's' : '' }}</span>
+    </div>
+
+    <div class="enrollment-layout">
+
+      <!-- LISTA DE ALUMNOS -->
+      <div class="students-list">
+        <div *ngIf="filteredStudents.length === 0" class="empty-state">
+          <div class="empty-icon">🎓</div>
+          <p>No hay alumnos registrados.</p>
+        </div>
+        <div *ngFor="let student of filteredStudents"
+             class="student-row"
+             [class.student-row-active]="selectedStudent?.id === student.id"
+             (click)="openEnrollmentModal(student)">
+          <div class="stu-avatar-sm">{{ student.name.charAt(0).toUpperCase() }}</div>
+          <div class="stu-row-info">
+            <strong>{{ student.name }}</strong>
+            <span>{{ student.email }}</span>
+          </div>
+          <i class="fas fa-chevron-right stu-arrow"></i>
+        </div>
+      </div>
+
+      <!-- PANEL DE CURSOS DEL ALUMNO SELECCIONADO -->
+      <div class="enrollment-panel" *ngIf="selectedStudent; else noStudentSelected">
+
+        <div class="panel-student-header">
+          <div class="enroll-avatar">{{ selectedStudent.name.charAt(0).toUpperCase() }}</div>
+          <div>
+            <h3>{{ selectedStudent.name }}</h3>
+            <span>{{ selectedStudent.email }}</span>
+          </div>
+          <button type="button" class="btn-close-panel" (click)="closeEnrollmentModal()">✕</button>
+        </div>
+
+        <!-- Cursos asignados -->
+        <div class="panel-section">
+          <h4 class="enroll-section-title">
+            <i class="fas fa-list-ul"></i> Cursos asignados
+            <span class="enroll-count-badge">{{ studentEnrollments.length }}</span>
+          </h4>
+
+          <div *ngIf="loadingEnrollments" class="enroll-loading">
+            <i class="fas fa-spinner fa-spin"></i> Cargando…
+          </div>
+
+          <div *ngIf="!loadingEnrollments && studentEnrollments.length === 0" class="enroll-empty">
+            <i class="fas fa-inbox"></i>
+            <p>Sin cursos asignados aún.</p>
+          </div>
+
+          <div *ngFor="let e of studentEnrollments" class="enroll-row">
+            <div class="enroll-row-icon"><i class="fas fa-book-open"></i></div>
+            <div class="enroll-row-info">
+              <strong>{{ e.courseTitle }}</strong>
+              <span>{{ e.className }}</span>
+            </div>
+            <span class="enroll-status-badge" [class.active]="e.status==='active'">
+              {{ e.status === 'active' ? 'Activo' : e.status }}
+            </span>
+            <button type="button" class="btn-remove-enroll" (click)="removeEnrollment(e)">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Asignar nuevo curso -->
+        <div class="panel-section assign-form-wrap">
+          <h4 class="enroll-section-title">
+            <i class="fas fa-plus-circle"></i> Asignar nuevo curso
+          </h4>
+          <div class="assign-form">
+            <div class="assign-field">
+              <label>Curso</label>
+              <select [(ngModel)]="enrollCourseId" (ngModelChange)="onEnrollCourseChange()">
+                <option value="">— Selecciona un curso —</option>
+                <option *ngFor="let c of courses" [value]="c.id">{{ c.title }}</option>
+              </select>
+            </div>
+            <div class="assign-field">
+              <label>Clase</label>
+              <select [(ngModel)]="enrollClassId" [disabled]="!enrollCourseId">
+                <option value="">— Selecciona una clase —</option>
+                <option *ngFor="let cl of enrollAvailableClasses" [value]="cl.id">
+                  {{ cl.name || cl.title }}
+                </option>
+              </select>
+            </div>
+            <button type="button" class="btn-assign-submit"
+                    [disabled]="!enrollCourseId || !enrollClassId || enrolling"
+                    (click)="assignCourseToStudent()">
+              <i [class]="enrolling ? 'fas fa-spinner fa-spin' : 'fas fa-check'"></i>
+              {{ enrolling ? 'Asignando…' : 'Asignar' }}
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <ng-template #noStudentSelected>
+        <div class="panel-placeholder">
+          <i class="fas fa-hand-pointer"></i>
+          <p>Selecciona un alumno de la lista para ver sus cursos</p>
+        </div>
+      </ng-template>
+
+    </div>
+
+  </section>
+
+  </div>
+</div>
+
+<!-- MODAL USUARIO -->
+<div *ngIf="showUserModal" class="modal-overlay" (click)="closeUserModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>
+        <i [class]="editingUser ? 'fas fa-user-edit' : 'fas fa-user-plus'"></i>
+        {{ editingUser ? 'Editar Usuario' : 'Nuevo Usuario' }}
+      </h2>
+      <button class="modal-close" (click)="closeUserModal()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group" [class.has-error]="userFormErrors['name']">
+        <label class="form-label"><i class="fas fa-user"></i> Nombre completo</label>
+        <input class="form-input" [(ngModel)]="userForm.name" placeholder="Ej: María García" />
+        <span *ngIf="userFormErrors['name']" class="field-error">{{ userFormErrors['name'] }}</span>
+      </div>
+
+      <div class="form-group" [class.has-error]="userFormErrors['email']">
+        <label class="form-label"><i class="fas fa-envelope"></i> Correo electrónico</label>
+        <input class="form-input" type="email" [(ngModel)]="userForm.email" placeholder="correo@escuela.com" />
+        <span *ngIf="userFormErrors['email']" class="field-error">{{ userFormErrors['email'] }}</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-id-badge"></i> Rol del usuario</label>
+
+        <div class="role-selector">
+          <label *ngFor="let r of customRoles" class="role-option" [class.selected]="userForm.role===r.code"
+                 [style.--role-color]="r.color">
+            <input type="radio" name="role" [value]="r.code" [(ngModel)]="userForm.role" hidden />
+            <i [class]="r.icon" [style.color]="r.color"></i>
+            <span>{{ r.name }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div *ngIf="userForm.role==='teacher'" class="role-info-banner teacher-banner">
+        <i class="fas fa-info-circle"></i>
+        El profesor puede crear cursos, clases y asignar lecciones.
+      </div>
+
+      <div *ngIf="userForm.role==='tutor'" class="role-info-banner tutor-banner">
+        <i class="fas fa-info-circle"></i>
+        El tutor puede ver informes de sus alumnos.
+      </div>
+
+      <div *ngIf="userForm.role==='student'" class="role-info-banner student-banner">
+        <i class="fas fa-info-circle"></i>
+        El estudiante puede ver cursos y completar quizzes.
+      </div>
+
+      <div *ngIf="userForm.role==='admin'" class="role-info-banner admin-banner">
+        <i class="fas fa-crown"></i>
+        El administrador tiene acceso completo.
+      </div>
+
+      <div *ngIf="!editingUser" class="form-group" [class.has-error]="userFormErrors['password']">
+        <label class="form-label"><i class="fas fa-lock"></i> Contraseña</label>
+        <input class="form-input" type="password" [(ngModel)]="userForm.password" placeholder="Mínimo 6 caracteres" />
+        <span *ngIf="userFormErrors['password']" class="field-error">{{ userFormErrors['password'] }}</span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeUserModal()">Cancelar</button>
+      <button class="btn-primary" (click)="saveUser()" [disabled]="loading">
+        <i [class]="loading ? 'fas fa-spinner fa-spin' : (editingUser ? 'fas fa-save' : 'fas fa-user-plus')"></i>
+        {{ loading ? 'Guardando…' : (editingUser ? 'Actualizar' : 'Crear Usuario') }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CLASE -->
+<div *ngIf="showClassModal" class="modal-overlay" (click)="closeClassModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>
+        <i [class]="editingClass ? 'fas fa-edit' : 'fas fa-plus-circle'"></i>
+        {{ editingClass ? 'Editar Clase' : 'Nueva Clase' }}
+      </h2>
+      <button class="modal-close" (click)="closeClassModal()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-chalkboard"></i> Nombre de la clase</label>
+        <input class="form-input" [(ngModel)]="classForm.name" placeholder="Ej: Matemáticas Nivel 1 - Grupo A" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-book"></i> Curso asociado</label>
+        <select class="form-input" [(ngModel)]="classForm.course_id">
+          <option value="">— Sin curso —</option>
+          <option *ngFor="let c of courses" [value]="c.id">{{ c.title }}</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-signal"></i> Estado</label>
+          <select class="form-input" [(ngModel)]="classForm.status">
+            <option value="open">Abierta</option>
+            <option value="closed">Cerrada</option>
+            <option value="active">Activa</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-users"></i> Máx. alumnos</label>
+          <input class="form-input" type="number" [(ngModel)]="classForm.max_students" min="1" max="200" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-calendar-alt"></i> Fecha inicio</label>
+          <input class="form-input" type="date" [(ngModel)]="classForm.start_date" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-calendar-check"></i> Fecha fin</label>
+          <input class="form-input" type="date" [(ngModel)]="classForm.end_date" />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeClassModal()">Cancelar</button>
+      <button class="btn-primary" (click)="saveClass()" [disabled]="loading">
+        <i [class]="loading ? 'fas fa-spinner fa-spin' : 'fas fa-save'"></i>
+        {{ loading ? 'Guardando…' : (editingClass ? 'Actualizar' : 'Crear Clase') }}
+      </button>
+    </div>
+  </div>
+</div>
+<!-- MODAL ESCUELA -->
+<div *ngIf="showSchoolModal" class="modal-overlay" (click)="closeSchoolModal()">
+  <div class="modal-box modal-grande" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>🏫 {{ schoolConfig ? 'Editar Configuración' : 'Nueva Configuración' }}</h2>
+      <button class="modal-close" (click)="closeSchoolModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Nombre y descripción -->
+      <div class="form-group">
+        <label class="form-label">🏫 Nombre de la Escuela *</label>
+        <input class="form-input" [(ngModel)]="schoolForm.school_name"
+               placeholder="Ej: EscuelaMak">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">📝 Descripción</label>
+        <textarea class="form-input" [(ngModel)]="schoolForm.school_description"
+                  rows="3" placeholder="Describe brevemente tu institución..."></textarea>
+      </div>
+
+      <!-- Contacto -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">📧 Correo</label>
+          <input class="form-input" type="email" [(ngModel)]="schoolForm.school_email"
+                 placeholder="admin@escuela.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">📞 Teléfono</label>
+          <input class="form-input" [(ngModel)]="schoolForm.school_phone"
+                 placeholder="+57 300 000 0000">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">📍 Dirección</label>
+        <input class="form-input" [(ngModel)]="schoolForm.school_address"
+               placeholder="Calle 123, Ciudad">
+      </div>
+
+      <!-- Logo -->
+      <div class="form-group">
+        <label class="form-label">🖼️ URL del Logo</label>
+        <input class="form-input" [(ngModel)]="schoolForm.school_logo_url"
+               placeholder="https://... (URL de imagen)">
+      </div>
+
+      <!-- Tipografía -->
+      <div class="colores-titulo">🔤 Tipografía de la Plataforma</div>
+      <div class="font-picker-grid">
+        <div *ngFor="let font of availableFonts"
+             class="font-card"
+             [class.font-card-active]="schoolForm.font_family === font.id"
+             [style.font-family]="font.family"
+             (click)="selectFont(font.id)">
+          <span class="font-sample">{{ font.sample }}</span>
+          <span class="font-name">{{ font.name }}</span>
+          <span *ngIf="schoolForm.font_family === font.id" class="font-check">✓</span>
+        </div>
+      </div>
+
+      <!-- Colores -->
+      <div class="colores-titulo">🎨 Colores de la Plataforma</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">🔵 Color Primario</label>
+          <div class="color-input-wrap">
+            <input type="color" [(ngModel)]="schoolForm.primary_color" class="color-picker">
+            <input class="form-input" [(ngModel)]="schoolForm.primary_color"
+                   placeholder="#667eea">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">🟣 Color Secundario</label>
+          <div class="color-input-wrap">
+            <input type="color" [(ngModel)]="schoolForm.secondary_color" class="color-picker">
+            <input class="form-input" [(ngModel)]="schoolForm.secondary_color"
+                   placeholder="#764ba2">
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">🟡 Color Acento</label>
+          <div class="color-input-wrap">
+            <input type="color" [(ngModel)]="schoolForm.accent_color" class="color-picker">
+            <input class="form-input" [(ngModel)]="schoolForm.accent_color"
+                   placeholder="#f093fb">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">⬜ Color Fondo</label>
+          <div class="color-input-wrap">
+            <input type="color" [(ngModel)]="schoolForm.background_color" class="color-picker">
+            <input class="form-input" [(ngModel)]="schoolForm.background_color"
+                   placeholder="#f0f2ff">
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeSchoolModal()">Cancelar</button>
+      <button class="btn-primary" (click)="saveSchoolConfig()" [disabled]="loading">
+        {{ loading ? '⏳ Guardando...' : '💾 Guardar Configuración' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MÉTRICA -->
+<div *ngIf="showMetricModal" class="modal-overlay" (click)="closeMetricModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>📊 {{ editingMetric ? 'Editar Métrica' : 'Nueva Métrica' }}</h2>
+      <button class="modal-close" (click)="closeMetricModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="modal-ayuda">
+        💡 Las métricas son indicadores que muestran estadísticas de la plataforma.
+        Por ejemplo: "Total Estudiantes = 45", "Promedio General = 78%".
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">📌 Nombre de la Métrica *</label>
+        <input class="form-input" [(ngModel)]="metricForm.metric_name"
+               placeholder="Ej: Total Estudiantes">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🔑 Clave única *</label>
+        <input class="form-input" [(ngModel)]="metricForm.metric_key"
+               placeholder="Ej: total_students (sin espacios)">
+        <small style="color:#94a3b8;">Identificador único, sin espacios ni caracteres especiales</small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">💾 Valor actual</label>
+          <input class="form-input" [(ngModel)]="metricForm.metric_value"
+                 placeholder="Ej: 45 o 78%">
+        </div>
+        <div class="form-group">
+          <label class="form-label">📐 Tipo</label>
+          <select class="form-input" [(ngModel)]="metricForm.metric_type">
+            <option value="number">Número (#)</option>
+            <option value="percentage">Porcentaje (%)</option>
+            <option value="text">Texto</option>
+            <option value="currency">Moneda ($)</option>
+            <option value="date">Fecha</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">🔢 Orden de visualización</label>
+          <input class="form-input" type="number" [(ngModel)]="metricForm.display_order"
+                 min="1" placeholder="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">👁️ Visibilidad</label>
+          <div class="visibilidad-toggle">
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="metricForm.is_visible">
+              <span class="toggle-slider"></span>
+            </label>
+            <span>{{ metricForm.is_visible ? 'Visible públicamente' : 'Oculta' }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeMetricModal()">Cancelar</button>
+      <button class="btn-primary" (click)="saveMetric()" [disabled]="loading">
+        {{ loading ? '⏳ Guardando...' : (editingMetric ? '💾 Actualizar' : '+ Crear Métrica') }}
+      </button>
+    </div>
+  </div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL: CURSOS ASIGNADOS DEL ALUMNO
+════════════════════════════════════════════════════════════════ -->
+<div *ngIf="showEnrollmentModal" class="modal-overlay" (click)="closeEnrollmentModal()">
+  <div class="modal-box modal-enrollment" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="modal-header enrollment-header">
+      <div class="enroll-header-left">
+        <div class="enroll-avatar">{{ selectedStudent?.name?.charAt(0)?.toUpperCase() }}</div>
+        <div>
+          <h3>{{ selectedStudent?.name }}</h3>
+          <span class="enroll-email">{{ selectedStudent?.email }}</span>
+        </div>
+      </div>
+      <button class="btn-close-modal" (click)="closeEnrollmentModal()">✕</button>
+    </div>
+
+    <!-- Cursos actuales -->
+    <div class="enroll-body">
+      <h4 class="enroll-section-title">
+        <i class="fas fa-list-ul"></i> Cursos asignados
+        <span class="enroll-count-badge">{{ studentEnrollments.length }}</span>
+      </h4>
+
+      <div *ngIf="loadingEnrollments" class="enroll-loading">
+        <i class="fas fa-spinner fa-spin"></i> Cargando…
+      </div>
+
+      <div *ngIf="!loadingEnrollments && studentEnrollments.length === 0" class="enroll-empty">
+        <i class="fas fa-inbox"></i>
+        <p>Este alumno no tiene cursos asignados aún.</p>
+      </div>
+
+      <div *ngIf="!loadingEnrollments && studentEnrollments.length > 0" class="enroll-list">
+        <div *ngFor="let e of studentEnrollments" class="enroll-row">
+          <div class="enroll-row-icon">
+            <i class="fas fa-book-open"></i>
+          </div>
+          <div class="enroll-row-info">
+            <strong>{{ e.courseTitle }}</strong>
+            <span>Clase: {{ e.className }}</span>
+          </div>
+          <span class="enroll-status-badge" [class.active]="e.status==='active'">
+            {{ e.status === 'active' ? 'Activo' : e.status }}
+          </span>
+          <button class="btn-remove-enroll" (click)="removeEnrollment(e)" title="Quitar asignación">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Formulario de asignación rápida -->
+      <div class="assign-form-wrap">
+        <h4 class="enroll-section-title">
+          <i class="fas fa-plus-circle"></i> Asignar nuevo curso
+        </h4>
+        <div class="assign-form">
+          <div class="assign-field">
+            <label>Curso</label>
+            <select [(ngModel)]="enrollCourseId" (ngModelChange)="onEnrollCourseChange()">
+              <option value="">— Selecciona un curso —</option>
+              <option *ngFor="let c of courses" [value]="c.id">{{ c.title }}</option>
+            </select>
+          </div>
+          <div class="assign-field">
+            <label>Clase</label>
+            <select [(ngModel)]="enrollClassId" [disabled]="!enrollCourseId">
+              <option value="">— Selecciona una clase —</option>
+              <option *ngFor="let cl of enrollAvailableClasses" [value]="cl.id">
+                {{ cl.name || cl.title }}
+              </option>
+            </select>
+          </div>
+          <button class="btn-assign-submit"
+                  [disabled]="!enrollCourseId || !enrollClassId || enrolling"
+                  (click)="assignCourseToStudent()">
+            <i [class]="enrolling ? 'fas fa-spinner fa-spin' : 'fas fa-check'"></i>
+            {{ enrolling ? 'Asignando…' : 'Asignar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL ELIMINAR -->
+<div *ngIf="deleteConfirm" class="modal-overlay" (click)="cancelDelete()">
+  <div class="modal-box modal-small" (click)="$event.stopPropagation()">
+    <div class="modal-header danger-header">
+      <h2><i class="fas fa-exclamation-triangle"></i> Confirmar eliminación</h2>
+    </div>
+
+    <div class="modal-body">
+      <div class="delete-warning">
+        <i class="fas fa-trash-alt"></i>
+        <p>¿Eliminar <strong>"{{ deleteConfirm.name }}"</strong>?</p>
+        <p class="delete-note">Esta acción no se puede deshacer.</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
+      <button class="btn-danger" (click)="executeDelete()" [disabled]="loading">
+        <i [class]="loading ? 'fas fa-spinner fa-spin' : 'fas fa-trash'"></i>
+        {{ loading ? 'Eliminando…' : 'Sí, eliminar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ROL -->
+<div *ngIf="showRoleModal" class="modal-overlay" (click)="closeRoleModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header" [style.background]="editingRole ? editingRole.color + '15' : 'linear-gradient(135deg, #667eea, #764ba2)'">
+      <h2>
+        <i [class]="editingRole ? editingRole.icon : 'fas fa-user-shield'"></i>
+        {{ editingRole ? 'Editar Rol' : 'Nuevo Rol' }}
+      </h2>
+      <button class="modal-close" (click)="closeRoleModal()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-tag"></i> Nombre del Rol *</label>
+        <input class="form-input" [(ngModel)]="roleForm.name" placeholder="Ej: Profesor de Matemáticas" />
+        <small class="form-help">Nombre visible del rol</small>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-code"></i> Código único *</label>
+        <input class="form-input" [(ngModel)]="roleForm.code" placeholder="Ej: math_teacher" [disabled]="!!editingRole" />
+        <small class="form-help">Identificador sin espacios (solo letras, números y guiones bajos)</small>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-align-left"></i> Descripción</label>
+        <textarea class="form-input" [(ngModel)]="roleForm.description" rows="2" placeholder="Describe qué puede hacer este rol..."></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-palette"></i> Color</label>
+          <div class="color-options">
+            <button *ngFor="let color of roleColors" 
+                    class="color-option" 
+                    [style.background]="color"
+                    [class.selected]="roleForm.color === color"
+                    (click)="roleForm.color = color">
+              <i *ngIf="roleForm.color === color" class="fas fa-check"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-icons"></i> Icono</label>
+          <div class="icon-options">
+            <button *ngFor="let icon of roleIcons" 
+                    class="icon-option" 
+                    [class.selected]="roleForm.icon === icon.code"
+                    (click)="roleForm.icon = icon.code">
+              <i [class]="icon.code"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeRoleModal()">Cancelar</button>
+      <button class="btn-primary" (click)="saveRole()" [disabled]="loading">
+        <i [class]="loading ? 'fas fa-spinner fa-spin' : (editingRole ? 'fas fa-save' : 'fas fa-plus')"></i>
+        {{ loading ? 'Guardando…' : (editingRole ? 'Actualizar' : 'Crear Rol') }}
+      </button>
+    </div>
+  </div>
+</div>

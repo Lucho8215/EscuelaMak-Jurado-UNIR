@@ -1,0 +1,148 @@
+
+.tabs-container { margin: 1.5rem 0; }
+.tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.tab-btn { padding: 0.6rem 1.2rem; border: none; border-radius: 25px; cursor: pointer; font-size: 0.9rem; font-weight: bold; background: rgba(255,255,255,0.2); color: #555; transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem; }
+.tab-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
+.tab-btn:hover { transform: translateY(-2px); }
+.tab-content { margin-top: 0; }
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+.detail-item { background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 10px; }
+.detail-item label { display: block; font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem; }
+.detail-item span { font-size: 1.1rem; font-weight: bold; }
+.class-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem; }
+.class-item { background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 10px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+.class-item:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.3); }
+.class-item.active { border-color: #667eea; background: rgba(102,126,234,0.2); }
+.class-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.class-name { font-weight: bold; font-size: 1rem; }
+.class-item-info { display: flex; gap: 1rem; font-size: 0.85rem; opacity: 0.8; }
+.status-badge { padding: 0.2rem 0.8rem; border-radius: 15px; color: white; font-size: 0.8rem; font-weight: bold; }
+.students-list { display: grid; gap: 0.5rem; }
+.student-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: rgba(255,255,255,0.1); border-radius: 8px; }
+.student-checkbox { display: flex; align-items: center; gap: 0.8rem; }
+.student-checkbox input[type="checkbox"] { width: 18px; height: 18px; accent-color: #40c057; cursor: pointer; }
+.student-name { font-weight: bold; }
+.enrollment-date { font-size: 0.85rem; opacity: 0.7; }
+.inscriptions-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+.inscriptions-table th { background: rgba(102,126,234,0.3); padding: 0.8rem; text-align: left; font-weight: bold; }
+.inscriptions-table td { padding: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.inscriptions-table tr:hover { background: rgba(255,255,255,0.05); }
+.pagination { margin-top: 1rem; text-align: center; opacity: 0.7; font-size: 0.9rem; }
+.lessons-list { display: grid; gap: 0.5rem; }
+.lesson-item { padding: 0.8rem; background: rgba(255,255,255,0.1); border-radius: 8px; }
+.lesson-checkbox { display: flex; align-items: center; gap: 0.8rem; }
+.lesson-checkbox input[type="checkbox"] { width: 18px; height: 18px; accent-color: #40c057; cursor: pointer; }
+.lesson-number { font-weight: bold; color: #667eea; }
+.lesson-title { font-size: 0.95rem; }
+.empty-state { text-align: center; padding: 3rem; opacity: 0.6; }
+.empty-state i { font-size: 3rem; display: block; margin-bottom: 1rem; }
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+.class-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.class-info-grid { display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.9rem; opacity: 0.8; }
+.button-group { display: flex; gap: 1rem; flex-wrap: wrap; }
+.btn-danger { background-color: #ff6b6b !important; }
+.success-message { margin-top: 1rem; padding: 1rem; background: rgba(64,192,87,0.3); border-radius: 10px; color: white; }
+.error-message { margin-top: 1rem; padding: 1rem; background: rgba(255,107,107,0.3); border-radius: 10px; color: white; }
+
+.enroll-form {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 2px dashed #667eea;
+}
+
+.student-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: #f8f9fa;
+  margin-bottom: 0.5rem;
+  transition: background 0.2s;
+}
+
+.student-item:hover { background: #e9ecef; }
+
+.student-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.student-name {
+  display: block;
+  font-weight: 600;
+  color: #333;
+}
+
+.student-email {
+  display: block;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.student-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.enrollment-date {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.8rem !important;
+}
+
+.success-message {
+  background: #d4edda;
+  color: #155724;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.lesson-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 5px solid #ff922b;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.lesson-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.assignment-panel {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px dashed #667eea;
+}
+
+.student-check-item {
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.student-check-item:hover {
+  background: #f0f0f0;
+}

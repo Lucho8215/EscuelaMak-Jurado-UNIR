@@ -1,0 +1,147 @@
+<div class="permissions-container">
+
+  <!-- Header -->
+  <div class="permissions-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="fas fa-shield-alt"></i>
+      </div>
+      <div class="header-text">
+        <h2>Permisos de Módulos</h2>
+        <p>Administra el acceso a los módulos del sistema para cada tipo de usuario</p>
+      </div>
+    </div>
+
+    <div class="header-badge" *ngIf="isAdmin()">
+      <i class="fas fa-crown"></i>
+      <span>Modo Administrador</span>
+    </div>
+  </div>
+
+  <!-- Alertas -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i>
+    {{ successMessage }}
+  </div>
+
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Loader -->
+  <div *ngIf="loading" style="text-align:center; padding: 2rem;">
+    <i class="fas fa-spinner fa-spin" style="font-size:2rem; color:#667eea;"></i>
+    <p>Cargando roles y permisos...</p>
+  </div>
+
+  <!-- Leyenda de roles (dinámica) -->
+  <div class="roles-legend" *ngIf="!loading">
+    <div class="role-item" *ngFor="let role of roles">
+      <span class="role-badge" [style.background-color]="role.color">
+        <i [class]="role.icon"></i>
+        {{ role.name }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Grid de módulos -->
+  <div class="modules-grid" *ngIf="!loading">
+    <div class="module-card" *ngFor="let module of modules">
+      <div class="module-header">
+        <div class="module-icon">
+          <i [class]="module.icon"></i>
+        </div>
+        <div class="module-info">
+          <h3>{{ module.name }}</h3>
+          <p>{{ module.description }}</p>
+        </div>
+        <div class="module-status">
+          <span class="status-badge" [class.enabled]="getEnabledCount(module.key) > 0">
+            <i class="fas fa-users"></i>
+            {{ getEnabledCount(module.key) }}/{{ roles.length }}
+          </span>
+        </div>
+      </div>
+
+      <div class="module-toggles">
+        <div class="toggle-item" *ngFor="let role of roles">
+          <div class="toggle-label">
+            <i [class]="role.icon" [style.color]="role.color"></i>
+            <span>{{ role.name }}</span>
+          </div>
+
+          <label class="toggle-switch" [class.disabled]="!isAdmin()">
+            <input
+              type="checkbox"
+              [checked]="getModuleStatus(module.key, role.code)"
+              (change)="toggleModule(module.key, role.code)"
+              [disabled]="!isAdmin() || saving"
+            >
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="module-actions">
+        <button class="btn-details" (click)="openModuleDetails(module)">
+          <i class="fas fa-eye"></i>
+          Ver detalles
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info -->
+  <div class="permissions-info" *ngIf="!loading">
+    <div class="info-card">
+      <i class="fas fa-info-circle"></i>
+      <div>
+        <strong>Nota:</strong> Los cambios afectan inmediatamente el acceso de los usuarios.
+        Para crear nuevos roles ve a <strong>Parámetros → Permisos → Roles</strong>.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de detalles -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header" *ngIf="selectedModule">
+      <div class="modal-icon">
+        <i [class]="selectedModule.icon"></i>
+      </div>
+      <div class="modal-title">
+        <h3>{{ selectedModule.name }}</h3>
+        <p>{{ selectedModule.description }}</p>
+      </div>
+      <button class="modal-close" (click)="closeModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedModule">
+      <div class="detail-list">
+        <div class="detail-item" *ngFor="let role of roles">
+          <div class="detail-left">
+            <i [class]="role.icon" [style.color]="role.color"></i>
+            <span class="detail-role">{{ role.name }}</span>
+          </div>
+          <div class="detail-status">
+            <span class="status-indicator" [class.active]="getModuleStatus(selectedModule.key, role.code)">
+              <i [class]="getModuleStatus(selectedModule.key, role.code) ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+              {{ getModuleStatus(selectedModule.key, role.code) ? 'Acceso permitido' : 'Sin acceso' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-primary" (click)="closeModal()">
+        <i class="fas fa-check"></i>
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>

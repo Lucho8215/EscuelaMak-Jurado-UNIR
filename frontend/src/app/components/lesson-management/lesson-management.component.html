@@ -1,0 +1,314 @@
+<div class="lesson-page">
+  <div class="page-header">
+    <div>
+      <h1>Lecciones del Curso</h1>
+      <p>
+        Crea contenido académico, asígnalo a una clase y monitorea el progreso
+        del alumno con estados, barras y resumen visual.
+      </p>
+    </div>
+  </div>
+
+  <div *ngIf="successMessage" class="alert success">{{ successMessage }}</div>
+  <div *ngIf="errorMessage" class="alert error">{{ errorMessage }}</div>
+
+  <div class="layout-grid">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>{{ editing ? 'Editar Lección' : 'Crear Lección' }}</h2>
+      </div>
+
+      <form class="form-grid" (ngSubmit)="saveLesson()">
+        <div class="form-group">
+          <label>Título</label>
+          <input [(ngModel)]="lessonForm.title" name="title" required />
+        </div>
+
+        <div class="form-group">
+          <label>Orden</label>
+          <input [(ngModel)]="lessonForm.orderIndex" name="orderIndex" type="number" min="1" />
+        </div>
+
+        <div class="form-group full">
+          <label>Resumen</label>
+          <textarea [(ngModel)]="lessonForm.summary" name="summary" rows="2"></textarea>
+        </div>
+
+        <div class="form-group full">
+          <label>Objetivo</label>
+          <textarea [(ngModel)]="lessonForm.objective" name="objective" rows="2"></textarea>
+        </div>
+
+        <div class="form-group full">
+          <label>Contenido</label>
+          <textarea [(ngModel)]="lessonForm.content" name="content" rows="5"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Video URL</label>
+          <input [(ngModel)]="lessonForm.videoUrl" name="videoUrl" />
+        </div>
+
+        <div class="form-group">
+          <label>Imagen portada URL</label>
+          <input [(ngModel)]="lessonForm.coverImageUrl" name="coverImageUrl" />
+        </div>
+
+        <div class="form-group">
+          <label>Recurso enlace</label>
+          <input [(ngModel)]="lessonForm.resourceLink" name="resourceLink" />
+        </div>
+
+        <div class="form-group">
+          <label>Archivo URL</label>
+          <input [(ngModel)]="lessonForm.resourceFileUrl" name="resourceFileUrl" />
+        </div>
+
+        <div class="form-group">
+          <label>Duración estimada (min)</label>
+          <input [(ngModel)]="lessonForm.estimatedMinutes" name="estimatedMinutes" type="number" min="1" />
+        </div>
+
+        <div class="form-group checkbox">
+          <label>
+            <input [(ngModel)]="lessonForm.isPublished" name="isPublished" type="checkbox" />
+            Publicada
+          </label>
+        </div>
+
+        <div class="actions full">
+          <button class="btn primary" type="submit" [disabled]="loading">
+            {{ editing ? 'Actualizar Lección' : 'Crear Lección' }}
+          </button>
+          <button class="btn secondary" type="button" (click)="resetForm()">Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Lecciones del Curso</h2>
+      </div>
+
+      <div class="lesson-list" *ngIf="lessons.length > 0; else emptyLessons">
+        <article class="lesson-card" *ngFor="let lesson of lessons">
+          <div class="lesson-card-top">
+            <h3>{{ lesson.orderIndex }}. {{ lesson.title }}</h3>
+            <span class="badge" [class.off]="!lesson.isPublished">
+              {{ lesson.isPublished ? 'Publicada' : 'Oculta' }}
+            </span>
+          </div>
+
+          <p>{{ lesson.summary || 'Sin resumen' }}</p>
+
+          <div class="meta-row">
+            <span>{{ lesson.estimatedMinutes }} min</span>
+          </div>
+
+          <div class="action-row">
+            <button class="btn secondary" (click)="editLesson(lesson)">Editar</button>
+            <button class="btn danger" (click)="deleteLesson(lesson)">Eliminar</button>
+          </div>
+
+          <div class="assign-box">
+            <select [(ngModel)]="selectedClassId" [ngModelOptions]="{ standalone: true }" (ngModelChange)="loadProgress()">
+              <option value="">Selecciona clase</option>
+              <option *ngFor="let cls of classes" [value]="cls.id">{{ cls.name }}</option>
+            </select>
+
+            <button class="btn primary" (click)="assignLesson(lesson)">
+              Asignar a Clase
+            </button>
+          </div>
+        </article>
+      </div>
+
+      <ng-template #emptyLessons>
+        <div class="empty-box">No hay lecciones creadas todavía.</div>
+      </ng-template>
+    </section>
+  </div>
+
+  <section class="panel progress-panel">
+    <div class="panel-header">
+      <h2>Seguimiento Académico del Alumno</h2>
+    </div>
+
+    <div class="summary-cards">
+      <div class="summary-card">
+        <strong>{{ getSummary().total }}</strong>
+        <span>Asignadas</span>
+      </div>
+      <div class="summary-card">
+        <strong>{{ getSummary().completed }}</strong>
+        <span>Completadas</span>
+      </div>
+      <div class="summary-card">
+        <strong>{{ getSummary().inProgress }}</strong>
+        <span>En progreso</span>
+      </div>
+      <div class="summary-card">
+        <strong>{{ getSummary().average }}%</strong>
+        <span>Promedio general</span>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <div class="chart-title">Resumen visual del avance del grupo</div>
+
+      <div class="chart-bar">
+        <div
+          class="segment completed"
+          [style.width.%]="getChartWidth(getSummary().completed)"
+          title="Completadas"
+        ></div>
+
+        <div
+          class="segment progress"
+          [style.width.%]="getChartWidth(getSummary().inProgress)"
+          title="En progreso"
+        ></div>
+
+        <div
+          class="segment assigned"
+          [style.width.%]="getChartWidth(getSummary().assigned)"
+          title="Asignadas"
+        ></div>
+
+        <div
+          class="segment inactive"
+          [style.width.%]="getChartWidth(getSummary().inactive)"
+          title="Inactivas"
+        ></div>
+      </div>
+
+      <div class="chart-legend">
+        <span><i class="dot completed"></i> Completadas</span>
+        <span><i class="dot progress"></i> En progreso</span>
+        <span><i class="dot assigned"></i> No iniciadas</span>
+        <span><i class="dot inactive"></i> Inactivas</span>
+      </div>
+    </div>
+
+    <div class="table-wrap" *ngIf="classProgress.length > 0; else emptyProgress">
+      <table>
+        <thead>
+          <tr>
+            <th>Alumno</th>
+            <th>Lección</th>
+            <th>Estado</th>
+            <th>Progreso</th>
+            <th>Recursos vistos</th>
+            <th>Nota</th>
+            <th>Inicio</th>
+            <th>Fin</th>
+            <th>Último acceso</th>
+            <th>Activo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let row of classProgress">
+            <td>
+              <div class="student-cell">
+                <strong>{{ row.studentName || row.studentId }}</strong>
+                <small>{{ row.studentEmail || 'Sin correo' }}</small>
+              </div>
+            </td>
+
+            <td>{{ row.lessonTitle || row.lessonId }}</td>
+
+            <td>
+              <span class="status-chip" [ngClass]="row.status">
+                {{
+                  row.status === 'assigned'
+                    ? 'No iniciada'
+                    : row.status === 'in_progress'
+                    ? 'En progreso'
+                    : row.status === 'completed'
+                    ? 'Completada'
+                    : 'Inactiva'
+                }}
+              </span>
+            </td>
+
+            <td>
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  [style.width.%]="row.progressPercent"
+                  [style.background]="getProgressColor(row.progressPercent)"
+                ></div>
+              </div>
+              <small>{{ row.progressPercent }}%</small>
+            </td>
+
+            <!-- Columna de recursos vistos -->
+            <td>
+              <div class="resource-checks">
+                <span class="res-chip" [class.visto]="hasViewedResource(row.studentId, row.lessonId, 'contenido')"
+                      title="Contenido">
+                  📋 {{ hasViewedResource(row.studentId, row.lessonId, 'contenido') ? '✓' : '–' }}
+                </span>
+                <span *ngIf="getLessonForRow(row)?.videoUrl || getLessonForRow(row)?.resourceLink"
+                      class="res-chip" [class.visto]="hasViewedResource(row.studentId, row.lessonId, 'video')"
+                      title="Video">
+                  🎬 {{ hasViewedResource(row.studentId, row.lessonId, 'video') ? '✓' : '–' }}
+                </span>
+                <span *ngIf="getLessonForRow(row)?.resourceFileUrl"
+                      class="res-chip" [class.visto]="hasViewedResource(row.studentId, row.lessonId, 'pdf')"
+                      title="PDF">
+                  📄 {{ hasViewedResource(row.studentId, row.lessonId, 'pdf') ? '✓' : '–' }}
+                </span>
+                <span *ngIf="getLessonForRow(row)?.coverImageUrl"
+                      class="res-chip" [class.visto]="hasViewedResource(row.studentId, row.lessonId, 'imagen')"
+                      title="Imagen">
+                  🖼️ {{ hasViewedResource(row.studentId, row.lessonId, 'imagen') ? '✓' : '–' }}
+                </span>
+              </div>
+              <small style="color:#6366f1; font-weight:600;">
+                {{ getResourceProgress(row.studentId, row.lessonId, getLessonForRow(row)!) }}% recursos
+              </small>
+            </td>
+
+            <td>
+              <div class="score-box">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  [(ngModel)]="scoreDrafts[row.id]"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <button class="mini-btn" (click)="saveScore(row)">Guardar</button>
+              </div>
+            </td>
+
+            <td>{{ row.startedAt ? (row.startedAt | date:'dd/MM/yyyy HH:mm') : '-' }}</td>
+            <td>{{ row.completedAt ? (row.completedAt | date:'dd/MM/yyyy HH:mm') : '-' }}</td>
+            <td>{{ row.lastAccessedAt ? (row.lastAccessedAt | date:'dd/MM/yyyy HH:mm') : '-' }}</td>
+            <td>{{ row.isActive ? 'Sí' : 'No' }}</td>
+
+            <td class="action-cell">
+              <button class="mini-btn secondary" (click)="markAssigned(row)">Reset</button>
+              <button class="mini-btn info" (click)="markInProgress(row)">Iniciar</button>
+              <button class="mini-btn success" (click)="markCompleted(row)">Completar</button>
+              <button class="mini-btn neutral" (click)="changeProgress(row, -10)">-10%</button>
+              <button class="mini-btn neutral" (click)="changeProgress(row, 10)">+10%</button>
+              <button class="mini-btn warn" (click)="toggleActive(row)">
+                {{ row.isActive ? 'Inactivar' : 'Activar' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #emptyProgress>
+      <div class="empty-box">
+        Selecciona una clase y asigna lecciones para ver el progreso del grupo.
+      </div>
+    </ng-template>
+  </section>
+</div>

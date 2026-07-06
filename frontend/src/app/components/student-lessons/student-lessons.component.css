@@ -1,0 +1,543 @@
+/* ========================
+   PÁGINA PRINCIPAL
+======================== */
+.page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  padding: 2rem;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.btn-back {
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: inline-block;
+  margin-bottom: 1rem;
+  transition: color 0.2s;
+}
+.btn-back:hover { color: white; }
+
+.page-header h1 {
+  color: white;
+  font-size: 2.2rem;
+  margin: 0 0 0.5rem;
+}
+.page-header p {
+  color: rgba(255,255,255,0.7);
+  margin: 0;
+}
+
+/* ========================
+   ALERTAS
+======================== */
+.alerta {
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+.alerta.error { background: #fee2e2; color: #dc2626; }
+.alerta.exito { background: #dcfce7; color: #16a34a; }
+
+/* ========================
+   RESUMEN DE TARJETAS
+======================== */
+.resumen-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.resumen-card {
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  color: white;
+}
+.resumen-card.azul { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.resumen-card.verde { background: linear-gradient(135deg, #22c55e, #15803d); }
+.resumen-card.amarillo { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.resumen-card.gris { background: linear-gradient(135deg, #64748b, #475569); }
+
+.resumen-numero {
+  font-size: 2rem;
+  font-weight: 800;
+}
+.resumen-label {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+/* ========================
+   BARRA PROGRESO GENERAL
+======================== */
+.progreso-general {
+  background: rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+}
+.progreso-header {
+  display: flex;
+  justify-content: space-between;
+  color: white;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+.progreso-pct { font-size: 1.1rem; }
+
+.barra-grande {
+  background: rgba(255,255,255,0.2);
+  border-radius: 99px;
+  height: 14px;
+  overflow: hidden;
+}
+.barra-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+/* ========================
+   ESTADO VACÍO / CARGA
+======================== */
+.estado-vacio {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: white;
+}
+.spinner { font-size: 3rem; margin-bottom: 1rem; }
+.vacio-emoji { font-size: 4rem; margin-bottom: 1rem; }
+.estado-vacio h3 { font-size: 1.5rem; margin: 0 0 0.5rem; }
+.estado-vacio p { opacity: 0.7; }
+
+/* ========================
+   GRID DE LECCIONES
+======================== */
+.lecciones-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.leccion-card {
+  background: white;
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  border: 3px solid transparent;
+}
+.leccion-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.leccion-card.completada { border-color: #22c55e; }
+.leccion-card.en-progreso { border-color: #3b82f6; }
+
+/* Imagen de portada de la tarjeta */
+.leccion-imagen {
+  height: 160px;
+  position: relative;
+  overflow: hidden;
+}
+.leccion-imagen img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.leccion-emoji-portada {
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex; align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+}
+
+/* Badge de estado sobre la imagen */
+.estado-badge {
+  position: absolute;
+  top: 0.75rem; right: 0.75rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+}
+.estado-badge.assigned { background: #64748b; }
+.estado-badge.in_progress { background: #3b82f6; }
+.estado-badge.completed { background: #22c55e; }
+.estado-badge.inactive { background: #ef4444; }
+
+/* Info de la lección en tarjeta */
+.leccion-info { padding: 1.25rem; }
+
+.leccion-clase {
+  font-size: 0.75rem;
+  color: #764ba2;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 0.25rem;
+}
+
+.leccion-titulo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 0.5rem;
+}
+
+.leccion-resumen {
+  color: #555;
+  font-size: 0.85rem;
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Chips de recursos disponibles */
+.leccion-recursos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+.recurso-chip {
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.recurso-chip.video { background: #fee2e2; color: #dc2626; }
+.recurso-chip.enlace { background: #dbeafe; color: #2563eb; }
+.recurso-chip.archivo { background: #dcfce7; color: #16a34a; }
+.recurso-chip.contenido { background: #fef9c3; color: #d97706; }
+
+/* Barra de progreso en tarjeta */
+.progreso-box {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.barra-progreso {
+  flex: 1;
+  background: #e5e7eb;
+  border-radius: 99px;
+  height: 8px;
+  overflow: hidden;
+}
+.barra-fill-sm {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s;
+}
+.progreso-box small { color: #666; font-size: 0.8rem; }
+
+.btn-estudiar {
+  width: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #1a1a2e, #0f3460);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btn-estudiar:hover { opacity: 0.85; }
+
+/* ========================
+   MODAL DE ESTUDIO
+======================== */
+.modal-overlay {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex; align-items: center;
+  justify-content: center;
+  z-index: 1000; padding: 1rem;
+}
+
+.modal-estudio {
+  background: #f8fafc;
+  border-radius: 20px;
+  width: 100%; max-width: 780px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+/* Header del modal */
+.modal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+.modal-clase {
+  font-size: 0.75rem;
+  color: #764ba2;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+.modal-top h2 {
+  color: #1a1a2e;
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+}
+.btn-cerrar-modal {
+  background: #e5e7eb;
+  border: none;
+  border-radius: 50%;
+  width: 36px; height: 36px;
+  cursor: pointer;
+  font-size: 1rem;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.btn-cerrar-modal:hover { background: #d1d5db; }
+
+/* Video embebido */
+.seccion-video { margin-bottom: 1.5rem; }
+.seccion-video h3, .seccion-imagen h3,
+.seccion-texto h3, .seccion-contenido h3,
+.seccion-recursos h3, .seccion-progreso h3 {
+  color: #1a1a2e;
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+.video-container {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 */
+  height: 0;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.video-container iframe {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+/* Imagen de portada en modal */
+.seccion-imagen {
+  margin-bottom: 1.5rem;
+}
+.seccion-imagen img {
+  width: 100%; border-radius: 12px;
+  max-height: 300px; object-fit: cover;
+}
+
+/* Resumen y objetivo */
+.seccion-texto {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.texto-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  border-left: 4px solid #764ba2;
+}
+.texto-card h3 { color: #764ba2; }
+.texto-card p { color: #444; margin: 0; line-height: 1.6; }
+
+/* Contenido principal */
+.seccion-contenido {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.contenido-texto {
+  color: #333;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+/* Recursos */
+.seccion-recursos {
+  margin-bottom: 1.5rem;
+}
+.recursos-botones {
+  display: flex; gap: 0.75rem; flex-wrap: wrap;
+}
+.btn-recurso {
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.2s;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+}
+.btn-recurso:hover { opacity: 0.85; }
+.btn-recurso.enlace { background: #3b82f6; }
+.btn-recurso.archivo { background: #22c55e; }
+
+/* Sección de progreso y acciones */
+.seccion-progreso {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.progreso-grande {
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.barra-grande-modal {
+  flex: 1;
+  background: #e5e7eb;
+  border-radius: 99px;
+  height: 18px;
+  overflow: hidden;
+}
+.barra-fill-modal {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s;
+}
+.progreso-pct-grande {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  min-width: 50px;
+  text-align: right;
+}
+
+.acciones-estudio {
+  display: flex; gap: 0.75rem; flex-wrap: wrap;
+}
+.btn-accion {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  color: white;
+}
+.btn-accion:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-accion.continuar { background: #3b82f6; }
+.btn-accion.completar { background: #22c55e; }
+.btn-accion.continuar:hover { opacity: 0.85; }
+.btn-accion.completar:hover { opacity: 0.85; }
+
+.completado-mensaje {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  width: 100%;
+}
+
+/* Botón cerrar abajo */
+.btn-cerrar-abajo {
+  width: 100%;
+  padding: 0.75rem;
+  background: #e5e7eb;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #333;
+  transition: background 0.2s;
+}
+.btn-cerrar-abajo:hover { background: #d1d5db; }
+
+/* ========================
+   RESPONSIVE
+======================== */
+@media (max-width: 768px) {
+  .page { padding: 1rem; }
+  .resumen-grid { grid-template-columns: repeat(2, 1fr); }
+  .lecciones-grid { grid-template-columns: 1fr; }
+  .modal-estudio { padding: 1.25rem; }
+  .acciones-estudio { flex-direction: column; }
+  .btn-accion { width: 100%; }
+}
+
+/* ========================
+   BOTÓN DE LECTURA EN VOZ ALTA (TTS)
+======================== */
+.btn-leer {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-leer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-leer:hover::before {
+  left: 100%;
+}
+
+.btn-leer:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px -2px rgba(99, 102, 241, 0.4);
+}
+
+.btn-leer:active {
+  transform: translateY(0);
+}
+
+.btn-leer .icono-leer {
+  font-size: 1.125rem;
+}
+
+.btn-leer.leyendo {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  animation: pulse-leer 1.5s infinite;
+}
+
+@keyframes pulse-leer {
+  0%, 100% {
+    box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 6px 12px -2px rgba(239, 68, 68, 0.5);
+  }
+}
+
+.btn-leer:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}

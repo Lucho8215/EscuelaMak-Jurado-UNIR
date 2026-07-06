@@ -1,0 +1,509 @@
+<div class="review-page">
+
+  <!-- ═══════════════════════════════════
+       ENCABEZADO
+  ════════════════════════════════════ -->
+  <div class="page-header">
+    <a routerLink="/dashboard" class="btn-back">← Volver al Panel</a>
+    <div class="header-titulo">
+      <h1>⭐ Revisión Académica</h1>
+      <p *ngIf="isAdminOrTeacher">Panel de seguimiento de quizzes y progreso de estudiantes</p>
+      <p *ngIf="isStudent">Tus cuestionarios disponibles y tus logros académicos</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       TARJETAS RESUMEN (solo admin/profesor)
+  ════════════════════════════════════ -->
+  <div class="resumen-grid" *ngIf="isAdminOrTeacher && !cargando">
+    <div class="resumen-card azul">
+      <div class="resumen-icono">📝</div>
+      <div class="resumen-datos">
+        <span class="resumen-num">{{ quizzes.length }}</span>
+        <span class="resumen-label">Total Quizzes</span>
+      </div>
+    </div>
+    <div class="resumen-card verde">
+      <div class="resumen-icono">✅</div>
+      <div class="resumen-datos">
+        <span class="resumen-num">{{ getQuizzesActivos() }}</span>
+        <span class="resumen-label">Quizzes Activos</span>
+      </div>
+    </div>
+    <div class="resumen-card morado">
+      <div class="resumen-icono">🎯</div>
+      <div class="resumen-datos">
+        <span class="resumen-num">{{ quizzes.length - getQuizzesActivos() }}</span>
+        <span class="resumen-label">Inactivos</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       CARGANDO
+  ════════════════════════════════════ -->
+  <div *ngIf="cargando" class="estado-vacio">
+    <div class="spinner">⏳</div>
+    <p>Cargando información...</p>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       BOTONES PRINCIPALES
+  ════════════════════════════════════ -->
+  <div class="acciones-grid" *ngIf="!cargando">
+
+    <!-- Tarjeta: Cuestionarios Disponibles -->
+    <div class="accion-card quiz-card" (click)="abrirModalQuizzes()">
+      <div class="accion-icono">❓</div>
+      <div class="accion-info">
+        <h3>Cuestionarios Disponibles</h3>
+        <p>{{ quizzes.length }} cuestionarios en total · {{ getQuizzesActivos() }} activos</p>
+      </div>
+      <div class="accion-flecha">→</div>
+    </div>
+
+    <!-- Tarjeta: Logros / Progreso de Estudiantes -->
+    <div class="accion-card logros-card" (click)="abrirModalLogros()">
+      <div class="accion-icono">🏆</div>
+      <div class="accion-info">
+        <h3>{{ isAdminOrTeacher ? 'Progreso de Estudiantes' : 'Mis Logros' }}</h3>
+        <p>{{ isAdminOrTeacher ? 'Ver resultados de todos los alumnos' : 'Mira tus resultados y avances' }}</p>
+      </div>
+      <div class="accion-flecha">→</div>
+    </div>
+
+    <!-- Tarjeta: Gestión (solo admin/profesor) -->
+    <div class="accion-card gestion-card" *ngIf="isAdminOrTeacher"
+         routerLink="/quiz-management">
+      <div class="accion-icono">⚙️</div>
+      <div class="accion-info">
+        <h3>Gestión de Quizzes</h3>
+        <p>Crear, editar y administrar cuestionarios</p>
+      </div>
+      <div class="accion-flecha">→</div>
+    </div>
+
+    <!-- Tarjeta: Mensajes de Estudiantes -->
+    <div class="accion-card mensajes-card" (click)="abrirModalMensajes()" *ngIf="isAdminOrTeacher">
+      <div class="accion-icono">💬</div>
+      <div class="accion-info">
+        <h3>Mensajes de Estudiantes</h3>
+        <p>{{ conversations.length }} conversaciones · {{ getTotalUnread() }} sin leer</p>
+      </div>
+      <div class="accion-flecha">→</div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       MODAL: LISTA DE QUIZZES
+  ════════════════════════════════════════════════════ -->
+  <div class="modal-overlay" *ngIf="modalActivo === 'quizzes'" (click)="cerrarModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div>
+          <h2>❓ Cuestionarios Disponibles</h2>
+          <p>{{ quizzes.length }} cuestionarios encontrados</p>
+        </div>
+        <button class="btn-close" (click)="cerrarModal()">✕</button>
+      </div>
+
+      <!-- Sin quizzes -->
+      <div *ngIf="quizzes.length === 0" class="estado-vacio-modal">
+        <p>📭 No hay cuestionarios disponibles aún.</p>
+      </div>
+
+      <!-- Grid de quizzes -->
+      <div class="quizzes-grid">
+        <div *ngFor="let quiz of quizzes" class="quiz-card-item"
+             [class.inactivo]="!quiz.isEnabled">
+
+          <!-- Header de la tarjeta -->
+          <div class="quiz-card-top">
+            <div class="quiz-card-titulo">
+              <h3>{{ quiz.title }}</h3>
+              <span class="badge-estado" [class.activo]="quiz.isEnabled">
+                {{ quiz.isEnabled ? '🟢 Activo' : '🔴 Inactivo' }}
+              </span>
+            </div>
+            <span class="badge-dif" [style.background]="getDificultadColor(quiz.difficulty)">
+              {{ getDificultadLabel(quiz.difficulty) }}
+            </span>
+          </div>
+
+          <!-- Descripción -->
+          <p class="quiz-desc">{{ quiz.description }}</p>
+
+          <!-- Métricas del quiz -->
+          <div class="quiz-metricas">
+            <div class="metrica">
+              <span class="metrica-icono">⏱️</span>
+              <span>{{ quiz.timeLimit }} min</span>
+            </div>
+            <div class="metrica">
+              <span class="metrica-icono">🎯</span>
+              <span>Aprobar: {{ quiz.passingScore }}%</span>
+            </div>
+            <div class="metrica">
+              <span class="metrica-icono">❓</span>
+              <span>{{quiz.questions ? quiz.questions.length : 0 }} preguntas</span>
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="quiz-acciones">
+            <!-- Ver detalle con preguntas -->
+            <button class="btn-accion-sm ver"
+                    (click)="verDetalleQuiz(quiz)">
+              👁️ Ver Preguntas
+            </button>
+            <!-- Botón iniciar (solo si está activo) -->
+            <a *ngIf="quiz.isEnabled && quiz.questions && quiz.questions.length > 0"
+               [routerLink]="['/quiz', quiz.id]"
+               class="btn-accion-sm iniciar">
+              ▶ Iniciar
+            </a>
+            <span *ngIf="!quiz.isEnabled" class="badge-inactivo">
+              No disponible
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+      <button class="btn-cerrar" (click)="cerrarModal()">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       MODAL: DETALLE DE UN QUIZ (con preguntas)
+  ════════════════════════════════════════════════════ -->
+  <div class="modal-overlay" *ngIf="modalActivo === 'quiz-detalle' && quizSeleccionado"
+       (click)="volverAQuizzes()">
+    <div class="modal-box modal-grande" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div>
+          <span class="badge-dif"
+                [style.background]="getDificultadColor(quizSeleccionado.difficulty)">
+            {{ getDificultadLabel(quizSeleccionado.difficulty) }}
+          </span>
+          <h2>{{ quizSeleccionado.title }}</h2>
+          <p>{{ quizSeleccionado.description }}</p>
+        </div>
+        <button class="btn-close" (click)="cerrarModal()">✕</button>
+      </div>
+
+      <!-- Métricas del quiz -->
+      <div class="detalle-metricas">
+        <div class="metrica-grande">
+          <span>⏱️</span>
+          <strong>{{ quizSeleccionado.timeLimit }} min</strong>
+          <small>Tiempo límite</small>
+        </div>
+        <div class="metrica-grande">
+          <span>🎯</span>
+          <strong>{{ quizSeleccionado.passingScore }}%</strong>
+          <small>Para aprobar</small>
+        </div>
+        <div class="metrica-grande">
+          <span>❓</span>
+          <strong>{{ quizSeleccionado.questions ? quizSeleccionado.questions.length : 0 }}</strong>
+          <small>Preguntas</small>
+        </div>
+        <div class="metrica-grande">
+          <span>{{ quizSeleccionado.isEnabled ? '🟢' : '🔴' }}</span>
+          <strong>{{ quizSeleccionado.isEnabled ? 'Activo' : 'Inactivo' }}</strong>
+          <small>Estado</small>
+        </div>
+      </div>
+
+      <!-- Lista de preguntas -->
+      <div class="preguntas-lista"
+           *ngIf="quizSeleccionado.questions && quizSeleccionado.questions.length > 0">
+        <h3>📋 Preguntas del Quiz</h3>
+
+        <div *ngFor="let pregunta of quizSeleccionado.questions; let i = index"
+             class="pregunta-item">
+
+          <!-- Número y texto de la pregunta -->
+          <div class="pregunta-header">
+            <span class="pregunta-num">{{ i + 1 }}</span>
+            <p class="pregunta-texto">{{ pregunta.text }}</p>
+          </div>
+
+          <!-- Opciones de respuesta -->
+          <div class="opciones-grid">
+            <div *ngFor="let opcion of pregunta.options; let j = index"
+                 class="opcion-item"
+                 [class.correcta]="isAdminOrTeacher && j === pregunta.correctAnswer">
+              <span class="opcion-letra">{{ ['A','B','C','D'][j] }}</span>
+              <span class="opcion-texto">{{ opcion }}</span>
+              <!-- Indica la correcta solo para admin/profesor -->
+              <span *ngIf="isAdminOrTeacher && j === pregunta.correctAnswer"
+                    class="opcion-check">✓</span>
+            </div>
+          </div>
+
+          <!-- Explicación si existe (solo admin/profesor) -->
+          <div *ngIf="isAdminOrTeacher && pregunta.explanation"
+               class="pregunta-explicacion">
+            💡 {{ pregunta.explanation }}
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Sin preguntas -->
+      <div *ngIf="!quizSeleccionado.questions || quizSeleccionado.questions.length === 0"
+           class="estado-vacio-modal">
+        <p>📭 Este quiz no tiene preguntas aún.</p>
+      </div>
+
+      <div class="modal-footer-btns">
+        <button class="btn-volver" (click)="volverAQuizzes()">← Volver a Quizzes</button>
+        <a *ngIf="quizSeleccionado.isEnabled && quizSeleccionado.questions?.length"
+           [routerLink]="['/quiz', quizSeleccionado.id]"
+           class="btn-iniciar-grande">
+          ▶ Iniciar Quiz
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       MODAL: LOGROS / PROGRESO DE ESTUDIANTES
+  ════════════════════════════════════════════════════ -->
+  <div class="modal-overlay" *ngIf="modalActivo === 'logros'" (click)="cerrarModal()">
+    <div class="modal-box modal-grande" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div>
+          <h2>🏆 {{ isAdminOrTeacher ? 'Progreso de Estudiantes' : 'Mis Logros' }}</h2>
+          <p>{{ isAdminOrTeacher ? 'Resultados de todos los quizzes completados' : 'Tus resultados en los cuestionarios' }}</p>
+        </div>
+        <button class="btn-close" (click)="cerrarModal()">✕</button>
+      </div>
+
+      <!-- Cargando -->
+      <div *ngIf="cargandoLogros" class="estado-vacio-modal">
+        <p>⏳ Cargando resultados...</p>
+      </div>
+
+      <div *ngIf="!cargandoLogros">
+
+        <!-- Estadísticas rápidas -->
+        <div class="stats-grid" *ngIf="logrosFiltrados.length > 0">
+          <div class="stat-card verde">
+            <strong>{{ getTotalAprobados() }}</strong>
+            <span>Aprobados</span>
+          </div>
+          <div class="stat-card rojo">
+            <strong>{{ getTotalReprobados() }}</strong>
+            <span>Reprobados</span>
+          </div>
+          <div class="stat-card azul">
+            <strong>{{ getPromedioGeneral() }}%</strong>
+            <span>Promedio</span>
+          </div>
+          <div class="stat-card gris">
+            <strong>{{ logrosFiltrados.length }}</strong>
+            <span>Total intentos</span>
+          </div>
+        </div>
+
+        <!-- Filtros (solo admin/profesor) -->
+        <div class="filtros-box" *ngIf="isAdminOrTeacher">
+          <input type="text"
+                 [(ngModel)]="filtroEstudiante"
+                 (ngModelChange)="aplicarFiltros()"
+                 placeholder="🔍 Buscar por nombre o correo..."
+                 class="input-filtro">
+          <select [(ngModel)]="filtroResultado"
+                  (ngModelChange)="aplicarFiltros()"
+                  class="select-filtro">
+            <option value="todos">Todos los resultados</option>
+            <option value="aprobado">Solo aprobados</option>
+            <option value="reprobado">Solo reprobados</option>
+          </select>
+        </div>
+
+        <!-- Sin logros -->
+        <div *ngIf="logrosFiltrados.length === 0" class="estado-vacio-modal">
+          <p>📭 {{ isAdminOrTeacher ? 'No hay resultados registrados aún.' : 'Aún no has completado ningún quiz.' }}</p>
+        </div>
+
+        <!-- Tabla de logros -->
+        <div class="tabla-scroll" *ngIf="logrosFiltrados.length > 0">
+          <table class="tabla-logros">
+            <thead>
+              <tr>
+                <th *ngIf="isAdminOrTeacher">👤 Estudiante</th>
+                <th>📝 Quiz</th>
+                <th>🎯 Puntaje</th>
+                <th>✅ Resultado</th>
+                <th>📅 Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let logro of logrosFiltrados">
+                <!-- Nombre del estudiante (solo admin/profesor) -->
+                <td *ngIf="isAdminOrTeacher">
+                  <div class="estudiante-cell">
+                    <strong>{{ logro.student_name || logro.studentName || 'Sin nombre' }}</strong>
+                    <small>{{ logro.student_email || logro.studentEmail || '' }}</small>
+                  </div>
+                </td>
+                <!-- Nombre del quiz -->
+                <td>{{ logro.quizzes?.title || logro.quiz_title || 'Quiz' }}</td>
+                <!-- Puntaje con color -->
+                <td>
+                  <span class="score-pill"
+                        [style.background]="getScoreColor(logro.score)">
+                    {{ logro.score }}%
+                  </span>
+                </td>
+                <!-- Aprobado/Reprobado -->
+                <td>
+                  <span class="resultado-badge"
+                        [class.aprobado]="logro.passed"
+                        [class.reprobado]="!logro.passed">
+                    {{ logro.passed ? '✅ Aprobado' : '❌ Reprobado' }}
+                  </span>
+                </td>
+                <!-- Fecha -->
+                <td class="fecha-cell">
+                  {{ logro.completed_at | date:'dd/MM/yyyy HH:mm' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <button class="btn-cerrar" (click)="cerrarModal()">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       MODAL: MENSAJES DE ESTUDIANTES
+  ═══════════════════════════════════════════════════════ -->
+  <div class="modal-overlay" *ngIf="modalActivo === 'mensajes'" (click)="cerrarModal()">
+    <div class="modal-box modal-mensajes" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div>
+          <h2>💬 Mensajes de Estudiantes</h2>
+          <p>{{ conversations.length }} conversaciones</p>
+        </div>
+        <button class="btn-close" (click)="cerrarModal()">✕</button>
+      </div>
+
+      <!-- Layout de mensajería: lista + detalle -->
+      <div class="mensajes-layout">
+
+        <!-- Lista de conversaciones -->
+        <div class="conv-list">
+          <!-- Botón nuevo mensaje -->
+          <div class="conv-new-btn-wrap">
+            <button class="conv-new-btn" (click)="showNewMsg = !showNewMsg">
+              <i class="fas fa-pen"></i> Nuevo mensaje
+            </button>
+          </div>
+
+          <div *ngIf="loadingConversations" class="conv-loading">⏳ Cargando...</div>
+          <div *ngIf="!loadingConversations && conversations.length === 0" class="conv-empty">
+            <div style="font-size:2rem">📭</div>
+            <p>No hay mensajes aún</p>
+          </div>
+          <div *ngFor="let conv of conversations"
+               class="conv-item"
+               [class.conv-active]="activeConversation?.student?.id === conv.student?.id"
+               [class.conv-unread]="conv.unread > 0"
+               (click)="openConversation(conv)">
+            <div class="conv-avatar">{{ conv.student?.name?.charAt(0)?.toUpperCase() || '?' }}</div>
+            <div class="conv-info">
+              <div class="conv-name">{{ conv.student?.name || 'Estudiante' }}</div>
+              <div class="conv-preview">{{ conv.lastMessage?.contenido }}</div>
+            </div>
+            <span class="conv-badge" *ngIf="conv.unread > 0">{{ conv.unread }}</span>
+          </div>
+        </div>
+
+        <!-- Panel de mensajes -->
+        <div class="msg-panel">
+
+          <!-- Nuevo mensaje a estudiante -->
+          <div *ngIf="showNewMsg" class="new-msg-panel">
+            <div class="new-msg-header">
+              <strong>✉️ Nuevo Mensaje</strong>
+              <button class="btn-back-conv" (click)="showNewMsg = false">✕</button>
+            </div>
+            <select class="msg-student-select" [(ngModel)]="selectedStudentId">
+              <option value="">Selecciona un estudiante...</option>
+              <option *ngFor="let s of allStudents" [value]="s.id">{{ s.name }}</option>
+            </select>
+            <div class="msg-input-area">
+              <input class="msg-input"
+                     [(ngModel)]="newMsgInput"
+                     placeholder="Escribe tu mensaje..."
+                     (keyup.enter)="sendNewMessage()"
+                     [disabled]="sendingNew">
+              <button class="msg-send-btn"
+                      (click)="sendNewMessage()"
+                      [disabled]="sendingNew || !newMsgInput.trim() || !selectedStudentId">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Sin conversación seleccionada -->
+          <div *ngIf="!activeConversation && !showNewMsg" class="msg-placeholder">
+            <div style="font-size:3rem">💬</div>
+            <p>Selecciona una conversación<br><small>o escribe un nuevo mensaje</small></p>
+          </div>
+
+          <!-- Conversación activa -->
+          <ng-container *ngIf="activeConversation && !showNewMsg">
+            <div class="msg-panel-header">
+              <button class="btn-back-conv" (click)="closeConversation()">← Volver</button>
+              <strong>{{ activeConversation.student?.name }}</strong>
+            </div>
+
+            <div class="msg-list">
+              <div *ngIf="loadingMessages" class="conv-loading">⏳</div>
+              <div *ngFor="let msg of activeMessages"
+                   class="msg-bubble"
+                   [class.msg-mine]="msg.sender_id === currentAuthId"
+                   [class.msg-theirs]="msg.sender_id !== currentAuthId"
+                   [class.msg-student]="msg.sender_id !== currentAuthId">
+                <div class="msg-meta">
+                  <span>{{ msg.sender_id === currentAuthId ? 'Tú' : (activeConversation.student?.name || 'Estudiante') }}</span>
+                  <span>{{ msg.created_at | date:'d MMM HH:mm' }}</span>
+                </div>
+                <div class="msg-text">{{ msg.contenido }}</div>
+              </div>
+            </div>
+
+            <div class="msg-input-area">
+              <input class="msg-input"
+                     [(ngModel)]="replyInput"
+                     placeholder="Escribe tu respuesta..."
+                     (keyup.enter)="sendReply()"
+                     [disabled]="sendingReply">
+              <button class="msg-send-btn"
+                      (click)="sendReply()"
+                      [disabled]="sendingReply || !replyInput.trim()">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

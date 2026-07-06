@@ -1,0 +1,113 @@
+##
+## Docker Compose — EscuelaMak Microservicios
+##
+## Levanta todos los servicios localmente con un solo comando:
+##   docker-compose up --build
+##
+## Cada servicio corre en su propio contenedor aislado.
+## Solo el API Gateway es accesible desde el exterior (puerto 3000).
+## Los demás servicios solo se comunican entre sí por la red interna 'escuelamak'.
+##
+
+services:
+  # ─── API Gateway ─── Único punto de entrada público
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"           # Solo este puerto es público
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - COURSE_SERVICE_URL=http://course-service:3002
+      - QUIZ_SERVICE_URL=http://quiz-service:3003
+      - USER_SERVICE_URL=http://user-service:3004
+    env_file:
+      - ./api-gateway/.env
+    depends_on:
+      - auth-service
+      - course-service
+      - quiz-service
+      - user-service
+    networks:
+      - escuelamak
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ─── Auth Service ───
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    # NO exponer puerto al exterior — solo accesible desde la red interna
+    expose:
+      - "3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+    env_file:
+      - ./auth-service/.env
+    networks:
+      - escuelamak
+    restart: unless-stopped
+
+  # ─── Course Service ───
+  course-service:
+    build:
+      context: ./course-service
+      dockerfile: Dockerfile
+    expose:
+      - "3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+    env_file:
+      - ./course-service/.env
+    networks:
+      - escuelamak
+    restart: unless-stopped
+
+  # ─── Quiz Service ───
+  quiz-service:
+    build:
+      context: ./quiz-service
+      dockerfile: Dockerfile
+    expose:
+      - "3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+    env_file:
+      - ./quiz-service/.env
+    networks:
+      - escuelamak
+    restart: unless-stopped
+
+  # ─── User Service ───
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    expose:
+      - "3004"
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+    env_file:
+      - ./user-service/.env
+    networks:
+      - escuelamak
+    restart: unless-stopped
+
+# Red interna privada — los servicios se comunican entre sí
+# pero no son accesibles desde el exterior
+networks:
+  escuelamak:
+    driver: bridge
+    internal: false  # El gateway necesita salida a internet (Supabase)

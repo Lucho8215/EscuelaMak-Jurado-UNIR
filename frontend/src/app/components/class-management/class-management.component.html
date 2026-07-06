@@ -1,0 +1,368 @@
+﻿<div class="module-container">
+  <a routerLink="/dashboard" class="btn btn-back">
+    <i class="fas fa-arrow-left"></i> Volver al Panel
+  </a>
+  <h1>
+    <i class="fas fa-chalkboard-teacher text-purple"></i>
+    Gestion de Clases
+  </h1>
+  <!-- Selector de clase -->
+  <div class="class-selector kid-card" *ngIf="classes.length > 0">
+    <div class="kid-card-content">
+      <h3><i class="fas fa-list"></i> Seleccionar Clase</h3>
+      <div class="class-grid">
+        <div *ngFor="let clase of classes" class="class-item"
+             [class.active]="selectedClass?.id === clase.id"
+             (click)="selectClass(clase)">
+          <div class="class-item-header">
+            <span class="class-name">{{clase.name}}</span>
+            <span class="status-badge" [style.background]="getStatusColor(clase.status)">
+              {{getStatusLabel(clase.status)}}
+            </span>
+          </div>
+          <div class="class-item-info">
+            <span><i class="fas fa-book"></i> {{getCourseTitle(clase.courseId)}}</span>
+            <span><i class="fas fa-users"></i> {{clase.enrollmentCount}}/{{clase.maxStudents}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Tabs - solo si hay clase seleccionada-->
+  <div class="tabs-container" *ngIf="selectedClass">
+    <div class="tabs">
+      <button class="tab-btn" [class.active]="activeTab === 'clases'" (click)="setTab('clases')">
+        <i class="fas fa-chalkboard"></i> Detalle
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'alumnos'" (click)="setTab('alumnos')">
+        <i class="fas fa-user-graduate"></i> Alumnos
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'lecciones'" (click)="setTab('lecciones')">
+        <i class="fas fa-book-open"></i> Lecciones
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'inscripciones'" (click)="setTab('inscripciones')">
+        <i class="fas fa-list-ul"></i> Inscripciones
+      </button>
+    </div>
+    <!-- TAB: DETALLE -->
+    <div *ngIf="activeTab === 'clases'" class="tab-content kid-card">
+      <div class="kid-card-content">
+        <h2>Detalle de Clase</h2>
+        <div class="detail-grid">
+          <div class="detail-item"><label>Nombre</label><span>{{selectedClass.name}}</span></div>
+          <div class="detail-item"><label>Curso</label><span>{{getCourseTitle(selectedClass.courseId)}}</span></div>
+          <div class="detail-item">
+            <label>Estado</label>
+            <span class="status-badge" [style.background]="getStatusColor(selectedClass.status)">
+              {{getStatusLabel(selectedClass.status)}}
+            </span>
+          </div>
+          <div class="detail-item"><label>Max Alumnos</label><span>{{selectedClass.maxStudents}}</span></div>
+          <div class="detail-item"><label>Inscritos</label><span>{{selectedClass.enrollmentCount}}</span></div>
+          <div class="detail-item"><label>Inicio</label><span>{{selectedClass.startDate | date:'dd/MM/yyyy'}}</span></div>
+          <div class="detail-item"><label>Fin</label><span>{{selectedClass.endDate | date:'dd/MM/yyyy'}}</span></div>
+        </div>
+        <div class="button-group" style="margin-top:1rem;">
+          <button class="btn btn-kid" (click)="editClass(selectedClass)">
+            <i class="fas fa-edit"></i> Editar
+          </button>
+          <button class="btn btn-kid btn-danger" (click)="deleteClass(selectedClass.id)">
+            <i class="fas fa-trash"></i> Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- TAB: ALUMNOS -->
+    <div *ngIf="activeTab === 'alumnos'" class="tab-content kid-card">
+      <div class="kid-card-content">
+        <h2><i class="fas fa-user-graduate"></i> Alumnos Inscritos ({{enrollments.length}})</h2>
+        <div *ngIf="getAvailableStudents().length > 0" style="margin-bottom:1.5rem;">
+          <button class="btn btn-kid" (click)="showEnrollForm = !showEnrollForm">
+            <i class="fas fa-user-plus"></i>
+            {{showEnrollForm ? 'Ocultar' : 'Inscribir Alumnos'}}
+          </button>
+          <div *ngIf="showEnrollForm" class="enroll-form" style="margin-top:1rem;">
+            <h3 style="margin-bottom:0.75rem;">Seleccionar alumnos:</h3>
+            <div *ngFor="let s of getAvailableStudents()" class="student-check-item">
+              <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:0.5rem;">
+                <input type="checkbox"
+                  [checked]="isSelectedForEnroll(s.id)"
+                  (change)="toggleSelectForEnroll(s.id)"
+                  style="width:18px;height:18px;cursor:pointer;">
+                <i class="fas fa-user-circle" style="color:#667eea;font-size:1.2rem;"></i>
+                <span><strong>{{s.name}}</strong> - {{s.email}}</span>
+              </label>
+            </div>
+            <div class="button-group" style="margin-top:1rem;">
+              <button class="btn btn-kid" (click)="enrollSelectedStudents()"
+                [disabled]="selectedStudentsForEnroll.length === 0 || loading">
+                <i class="fas fa-check"></i> Inscribir ({{selectedStudentsForEnroll.length}}) seleccionados
+              </button>
+              <button class="btn btn-kid btn-secondary"
+                (click)="showEnrollForm = false; selectedStudentsForEnroll = []">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="successMessage" class="success-message">
+          <i class="fas fa-check-circle"></i> {{successMessage}}
+        </div>
+        <div *ngIf="errorMessage" class="error-message">
+          <i class="fas fa-times-circle"></i> {{errorMessage}}
+        </div>
+        <div *ngIf="enrollments.length === 0" class="empty-state">
+          <i class="fas fa-user-slash"></i>
+          <p>No hay alumnos inscritos en esta clase</p>
+        </div>
+        <div class="students-list" *ngIf="enrollments.length > 0">
+          <div *ngFor="let enrollment of enrollments" class="student-item">
+            <div class="student-info">
+              <i class="fas fa-user-circle" style="font-size:1.5rem;color:#667eea;"></i>
+              <div>
+                <span class="student-name">{{enrollment.studentName || getStudentName(enrollment.studentId)}}</span>
+                <span class="student-email">{{enrollment.studentEmail || enrollment.studentId}}</span>
+              </div>
+            </div>
+            <div class="student-actions">
+              <span class="enrollment-date">
+                <i class="fas fa-calendar"></i> {{enrollment.enrollmentDate | date:'dd/MM/yyyy'}}
+              </span>
+              <button class="btn btn-kid btn-danger btn-sm" (click)="removeEnrollment(enrollment.id)">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- TAB: LECCIONES -->
+    <div *ngIf="activeTab === 'lecciones'" class="tab-content kid-card">
+      <div class="kid-card-content">
+        <h2><i class="fas fa-book-open"></i> Lecciones de la Clase</h2>
+        <div class="enroll-form" style="border-color:#ff922b;margin-bottom:1.5rem;">
+          <h3><i class="fas fa-plus-circle" style="color:#ff922b;"></i> Nueva Leccion</h3>
+          <div class="form-row" style="margin-bottom:0.75rem;">
+            <input type="text" [(ngModel)]="newLesson.title"
+              placeholder="Titulo de la leccion" class="kid-input">
+            <input type="text" [(ngModel)]="newLesson.videoUrl"
+              placeholder="URL del Video (YouTube)" class="kid-input">
+          </div>
+          <div *ngIf="enrollments.length > 0" style="margin-bottom:0.75rem;">
+            <p style="font-weight:600;margin-bottom:0.5rem;">
+              <i class="fas fa-users"></i> Asignar a alumnos al crear:
+            </p>
+            <div style="margin-bottom:0.5rem;">
+              <button class="btn btn-kid btn-sm" style="background:#eee;color:#333;"
+                (click)="selectAllForLesson()">Todos</button>
+              <button class="btn btn-kid btn-sm" style="background:#eee;color:#333;margin-left:0.5rem;"
+                (click)="selectedStudentsForLesson = []">Ninguno</button>
+            </div>
+            <div *ngFor="let enrollment of enrollments" class="student-check-item">
+              <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:0.35rem;">
+                <input type="checkbox"
+                  [checked]="isSelectedForLesson(enrollment.studentId)"
+                  (change)="toggleSelectForLesson(enrollment.studentId)"
+                  style="width:16px;height:16px;cursor:pointer;">
+                <span>{{enrollment.studentName || getStudentName(enrollment.studentId)}}</span>
+              </label>
+            </div>
+          </div>
+          <button class="btn btn-kid" style="background:#ff922b;"
+            (click)="createLesson()" [disabled]="!newLesson.title.trim() || loading">
+            <i class="fas fa-plus"></i> {{loading ? 'Guardando...' : 'Crear Leccion'}}
+          </button>
+        </div>
+        <div *ngIf="successMessage" class="success-message">
+          <i class="fas fa-check-circle"></i> {{successMessage}}
+        </div>
+        <div *ngIf="lessons.length === 0" class="empty-state">
+          <i class="fas fa-book"></i>
+          <p>No hay lecciones creadas para esta clase</p>
+        </div>
+        <div *ngFor="let lesson of lessons" class="lesson-card">
+          <div class="lesson-header">
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <i class="fas fa-play-circle" style="color:#ff922b;font-size:1.5rem;"></i>
+              <div>
+                <strong>{{lesson.title}}</strong>
+                <span *ngIf="lesson.videoUrl" style="display:block;font-size:0.8rem;color:#888;">
+                  <i class="fas fa-video"></i> {{lesson.videoUrl}}
+                </span>
+              </div>
+            </div>
+            <button class="btn btn-kid btn-sm" style="background:#667eea;"
+              (click)="openAssignLesson(lesson)">
+              <i class="fas fa-user-tag"></i> Asignaciones
+            </button>
+          </div>
+          <div *ngIf="selectedLessonForAssignment?.id === lesson.id" class="assignment-panel">
+            <p style="font-weight:600;margin-bottom:0.5rem;">
+              <i class="fas fa-users"></i> Alumnos con acceso:
+            </p>
+            <div *ngFor="let enrollment of enrollments" class="student-check-item">
+              <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:0.35rem;">
+                <input type="checkbox"
+                  [checked]="isStudentAssigned(enrollment.studentId)"
+                  (change)="toggleLessonAssignment(lesson.id, enrollment.studentId)"
+                  style="width:16px;height:16px;cursor:pointer;">
+                <span>{{enrollment.studentName || getStudentName(enrollment.studentId)}}</span>
+              </label>
+            </div>
+            <button class="btn btn-kid btn-sm"
+              style="margin-top:0.5rem;background:#eee;color:#333;"
+              (click)="selectedLessonForAssignment = null">
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- TAB: INSCRIPCIONES -->
+    <div *ngIf="activeTab === 'inscripciones'" class="tab-content kid-card">
+      <div class="kid-card-content">
+        <h2><i class="fas fa-list-ul"></i> Lista de Inscripciones</h2>
+        <div *ngIf="enrollments.length === 0" class="empty-state">
+          <i class="fas fa-inbox"></i>
+          <p>No hay inscripciones registradas</p>
+        </div>
+        <table class="inscriptions-table" *ngIf="enrollments.length > 0">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Estudiante</th>
+              <th>Email</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of enrollments">
+              <td>{{e.enrollmentDate | date:'dd/MM/yyyy HH:mm'}}</td>
+              <td>{{e.studentName || getStudentName(e.studentId)}}</td>
+              <td>{{e.studentEmail || e.studentId}}</td>
+              <td>
+                <span class="status-badge"
+                  [style.background]="e.status === 'active' ? '#40c057' : '#ff6b6b'">
+                  {{e.status === 'active' ? 'Activo' : e.status}}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div *ngIf="enrollments.length > 0" class="pagination">
+          <span>{{enrollments.length}} inscripcion(es)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Sin clase seleccionada -->
+  <div *ngIf="!selectedClass && classes.length > 0" class="kid-card">
+    <div class="kid-card-content" style="text-align:center;padding:3rem;">
+      <i class="fas fa-hand-pointer" style="font-size:3rem;opacity:0.5;"></i>
+      <p>Selecciona una clase de la lista para ver sus detalles</p>
+    </div>
+  </div>
+  <!-- Formulario crear/editar clase -->
+  <div class="kid-card" style="margin-top:2rem;">
+    <div class="kid-card-content">
+      <h2>{{editingClass ? 'Editar Clase' : 'Crear Nueva Clase'}}</h2>
+      <form (ngSubmit)="saveClass()" #classForm="ngForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre de la Clase</label>
+            <input type="text" [(ngModel)]="newClass.name" name="name" required
+              class="kid-input" placeholder="Ej: Jardines AS 2">
+          </div>
+          <div class="form-group">
+            <label>Curso</label>
+            <select [(ngModel)]="newClass.courseId" name="courseId" required class="kid-input">
+              <option value="">Seleccionar curso...</option>
+              <option *ngFor="let course of courses" [value]="course.id">{{course.title}}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Profesor</label>
+            <select [(ngModel)]="newClass.teacherId" name="teacherId" class="kid-input">
+              <option value="">Seleccionar profesor...</option>
+              <option *ngFor="let t of teachers" [value]="t.id">{{t.name}}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select [(ngModel)]="newClass.status" name="status" class="kid-input">
+              <option value="open">Abierta</option>
+              <option value="closed">Cerrada</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tamano maximo</label>
+            <input type="number" [(ngModel)]="newClass.maxStudents" name="maxStudents"
+              required class="kid-input" min="1">
+          </div>
+          <div class="form-group">
+            <label>Fecha Inicio</label>
+            <input type="date" [(ngModel)]="newClass.startDate" name="startDate" class="kid-input">
+          </div>
+          <div class="form-group">
+            <label>Fecha Fin</label>
+            <input type="date" [(ngModel)]="newClass.endDate" name="endDate" class="kid-input">
+          </div>
+        </div>
+        <div class="button-group">
+          <button type="submit" class="btn btn-kid"
+            [disabled]="!classForm.form.valid || loading">
+            <i class="fas fa-save"></i>
+            {{loading ? 'Guardando...' : (editingClass ? 'Actualizar' : 'Crear Clase')}}
+          </button>
+          <button type="button" class="btn btn-kid btn-secondary"
+            (click)="resetClassForm()">Cancelar</button>
+        </div>
+        <div *ngIf="successMessage" class="success-message">
+          <i class="fas fa-check-circle"></i> {{successMessage}}
+        </div>
+        <div *ngIf="errorMessage" class="error-message">
+          <i class="fas fa-times-circle"></i> {{errorMessage}}
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- Lista de todas las clases -->
+  <div style="margin-top:2rem;">
+    <h2>Todas las Clases ({{classes.length}})</h2>
+    <div *ngIf="loading" style="text-align:center;padding:2rem;">
+      <i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i>
+    </div>
+    <div *ngIf="classes.length === 0 && !loading" class="kid-card">
+      <div class="kid-card-content" style="text-align:center;">
+        <i class="fas fa-inbox" style="font-size:3rem;opacity:0.5;"></i>
+        <p>No hay clases creadas aun</p>
+      </div>
+    </div>
+    <div *ngFor="let clase of classes" class="kid-card" style="margin-bottom:1rem;">
+      <div class="kid-card-content">
+        <div class="class-header">
+          <h3>{{clase.name}}</h3>
+          <span class="status-badge" [style.background]="getStatusColor(clase.status)">
+            {{getStatusLabel(clase.status)}}
+          </span>
+        </div>
+        <div class="class-info-grid">
+          <span><i class="fas fa-book"></i> {{getCourseTitle(clase.courseId)}}</span>
+          <span><i class="fas fa-users"></i> {{clase.enrollmentCount}}/{{clase.maxStudents}} alumnos</span>
+          <span><i class="fas fa-calendar"></i> {{clase.startDate | date:'dd/MM/yyyy'}}</span>
+        </div>
+        <div class="button-group" style="margin-top:1rem;">
+          <button class="btn btn-kid" (click)="selectClass(clase); setTab('clases')">
+            <i class="fas fa-eye"></i> Ver Detalles
+          </button>
+          <button class="btn btn-kid" (click)="editClass(clase)">
+            <i class="fas fa-edit"></i> Editar
+          </button>
+          <button class="btn btn-kid btn-danger" (click)="deleteClass(clase.id)">
+            <i class="fas fa-trash"></i> Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
