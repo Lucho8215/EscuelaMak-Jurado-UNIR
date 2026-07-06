@@ -18,7 +18,8 @@ export class SupabaseService {
           // Supabase intenta usar navigator.locks para sincronizar pestañas.
           // Si el navegador no lo soporta bien genera 31+ errores en consola.
           // Esta función cumple el mismo contrato (ejecuta fn()) sin el lock real.
-          lock: async (_name: string, _acquireTimeout: number, fn: () => Promise<unknown>) => fn(),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          lock: async (_name: string, _acquireTimeout: number, fn: () => Promise<any>) => fn() as any,
 
           // Renovar token automáticamente antes de que expire
           autoRefreshToken: true,
